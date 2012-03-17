@@ -38,6 +38,7 @@ you will first need to install the following dependencies:
         github := auth.NewGitHubAuth(githubAccessKey, githubSecretKey)
         
         // Restricted URLs
+        http.HandleFunc("/", auth.Secure(WelcomeScreen))
         http.HandleFunc("/account", auth.Secure(AccountInfo))
         http.HandleFunc("/billing", auth.Secure(BillingInfo))
         
@@ -66,11 +67,11 @@ Then we create an instance of a Github Oauth provider. We pass in our Github cli
 
 Then we add our handlers using the standard `net/http` library:
 
-    http.HandleFunc("/", AccountInfo)
+    http.HandleFunc("/auth", AccountInfo)
     
 We can easily secure this URL by wrapping it in the `Secure` function:
 
-    http.HandleFunc("/", auth.Secure(AccountInfo))
+    http.HandleFunc("/auth", auth.Secure(AccountInfo))
     
 By default, `auth.go` will route any unauthenticated users to `/auth/login`. Therefore we need to create a route for `/auth/login` that initiates the Github Oauth login flow:
 
