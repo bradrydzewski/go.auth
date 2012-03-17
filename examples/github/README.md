@@ -1,7 +1,5 @@
-#Github Demo
-Demo for authenticating a user with the Github OAuth2 API.
+Demo for authenticating a user with the <b>Github OAuth2</b> API.
 
-##Required Configuration
 Running the demo requires some basic setup and configuration, detailed below.
 
 ###Register Application
@@ -22,6 +20,6 @@ When you click the Register Application button you will be given the Client Id a
 ###Required Flags
 In order to start the application you will need to pass in the Client Id and Secret Key as args:
 
-   ./6.out -access_token a69c7cca3b3121a40934 -secret_key 1ac41f49814k9asdfs9fd798we87s8f79904abaa91ac
+    ./6.out -access_token a69c7cca3b3121a40934 -secret_key 1ac41f49814k9asdfs9fd798we87s8f79904abaa91ac
 
 
