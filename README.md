@@ -101,6 +101,11 @@ The user data is passed to your Handler via the URL's `User` field:
  <td>"UID"</td>
 </tr>
 <tr>
+ <td>CookieSecret</td>
+ <td>key used to encrypt the cookie value</td>
+ <td>none, must be set by user</td>
+</tr>
+<tr>
  <td>CookieExp</td>
  <td>amount of time before cookie expires</td>
  <td>time.Hour * 24 * 14</td>
