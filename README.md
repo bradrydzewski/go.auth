@@ -112,7 +112,7 @@ The user data is passed to your Handler via the URL's `User` field:
 <tr>
  <td>LoginSuccessRedirect</td>
  <td>where to re-direct a user after successful auth</td>
- <td>"/auth/login"</td>
+ <td>"/"</td>
 </tr>
 <tr>
  <td>LogoutSuccessRedirect</td>
