@@ -49,7 +49,7 @@ you will first need to install the following dependencies:
         http.ListenAndServe(":8080", nil)
     }
 
-## Breakdown
+### Breakdown
 Let's breakdown each block of code in the above example.
 
 First we set the Cookie secret. User session are stored in secure cookies, using the authcookie library:
@@ -79,7 +79,7 @@ By default, `auth.go` will route any unauthenticated users to `/auth/login`. The
         github.Authorize(w, r)
     })
     
-## User data
+### User data
 The user data is passed to your Handler via the URL's `User` field:
 
     func MyHandler(w http.ResponseWriter, r *http.Request) {
@@ -130,3 +130,6 @@ The user data is passed to your Handler via the URL's `User` field:
 Example:
 
     auth.Config.LoginSuccessRedirect = "/account"
+    
+## routes.go
+To integrate with the [routes.go](https://github.com/bradrydzewski/routes.go) library check out the `/examples/routes` demo application.
