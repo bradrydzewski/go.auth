@@ -96,32 +96,32 @@ The user data is passed to your Handler via the URL's `User` field:
  <th>Default Value</th>
 </tr>
 <tr>
- <td>CookieName</td>
+ <td>auth.Config.CookieName</td>
  <td>name of the secure cookie</td>
  <td>"UID"</td>
 </tr>
 <tr>
- <td>CookieSecret</td>
+ <td>auth.Config.CookieSecret</td>
  <td>key used to encrypt the cookie value</td>
- <td>none, must be set by user</td>
+ <td>nil</td>
 </tr>
 <tr>
- <td>CookieExp</td>
+ <td>auth.Config.CookieExp</td>
  <td>amount of time before cookie expires</td>
  <td>time.Hour * 24 * 14</td>
 </tr>
 <tr>
- <td>LoginRedirect</td>
+ <td>auth.Config.LoginRedirect</td>
  <td>where to re-direct a user that is not authenticated</td>
  <td>"/auth/login"</td>
 </tr>
 <tr>
- <td>LoginSuccessRedirect</td>
+ <td>auth.Config.LoginSuccessRedirect</td>
  <td>where to re-direct a user after successful auth</td>
  <td>"/"</td>
 </tr>
 <tr>
- <td>LogoutSuccessRedirect</td>
+ <td>auth.Config.LogoutSuccessRedirect</td>
  <td>where to re-direct a user after logout</td>
  <td>"/auth/login"</td>
 </tr>
