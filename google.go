@@ -1,6 +1,6 @@
 package auth
 
-import(
+import (
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -10,18 +10,18 @@ import(
 // GoogleUser represents a Google user
 // object returned by the Oauth service.
 type GoogleUser struct {
-	Id        string `json:"id"`
-    Email     string `json:"email"`
-    Picture   string `json:"picture"`
-    Name      string `json:"name"`
-    Link      string `json:"link"`
+	Id      string `json:"id"`
+	Email   string `json:"email"`
+	Picture string `json:"picture"`
+	Name    string `json:"name"`
+	Link    string `json:"link"`
 }
 
-func (u *GoogleUser) Username() string { 
+func (u *GoogleUser) Username() string {
 	return u.Link
 }
 
-func (u *GoogleUser) Password() string { 
+func (u *GoogleUser) Password() string {
 	return ""
 }
 
@@ -36,7 +36,6 @@ func (u *GoogleUser) Icon() string {
 func (u *GoogleUser) Url() string {
 	return u.Link
 }
-
 
 // GoogleHandler is an implementation of Google's Oauth2 
 // for web application flow.
@@ -65,7 +64,7 @@ func NewGoogleHandler(clientId, clientSecret, redirectUrl string) *GoogleHandler
 func (self *GoogleHandler) GetAuthenticatedUser(accessToken string) (User, error) {
 
 	header := make(http.Header)
-	header.Add("Authorization", "OAuth " + accessToken)
+	header.Add("Authorization", "OAuth "+accessToken)
 
 	user := &GoogleUser{}
 	err := self.OAuth2Mixin.GetAuthenticatedUser(self.UserResourceUrl, accessToken, header, user)
@@ -83,7 +82,7 @@ func (self *GoogleHandler) AuthorizeRedirect(w http.ResponseWriter, r *http.Requ
 
 func (self *GoogleHandler) GetAccessToken(r *http.Request) (string, error) {
 
-	code := r.URL.Query().Get("code");
+	code := r.URL.Query().Get("code")
 	if code == "" {
 		return "", errors.New("No Access Code in the Request URL")
 	}
@@ -92,7 +91,7 @@ func (self *GoogleHandler) GetAccessToken(r *http.Request) (string, error) {
 	params.Add("code", code)
 	params.Add("scope", "")
 	params.Add("grant_type", "authorization_code")
-	
+
 	header := make(http.Header)
 	header.Add("Content-Type", "application/x-www-form-urlencoded")
 
@@ -113,7 +112,7 @@ func (self *GoogleHandler) GetAccessToken(r *http.Request) (string, error) {
 // GoogleTokenResp represents the response data type
 // returned from an Access Token request
 type GoogleTokenResp struct {
-    AccessToken string `json:"access_token"`
-    ExpiresIn   int32  `json:"expires_in"`
-    TokenType   string `json:"token_type"`
+	AccessToken string `json:"access_token"`
+	ExpiresIn   int32  `json:"expires_in"`
+	TokenType   string `json:"token_type"`
 }

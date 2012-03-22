@@ -1,27 +1,26 @@
 package auth
 
-import(
+import (
 	"errors"
 	"net/http"
 	"net/url"
 )
 
-
 // GitHubUser represents a GitHub user
 // object returned by the Oauth service.
 type GitHubUser struct {
-    Email   string `json:"email"`
-    Avatar  string `json:"avatar_url"`
-    Name    string `json:"name"`
-    Login   string `json:"login"`
-    Link    string `json:"url"`
+	Email  string `json:"email"`
+	Avatar string `json:"avatar_url"`
+	Name   string `json:"name"`
+	Login  string `json:"login"`
+	Link   string `json:"url"`
 }
 
-func (u *GitHubUser) Username() string { 
+func (u *GitHubUser) Username() string {
 	return u.Link
 }
 
-func (u *GitHubUser) Password() string { 
+func (u *GitHubUser) Password() string {
 	return ""
 }
 
@@ -79,7 +78,7 @@ func (self *GitHubHandler) AuthorizeRedirect(w http.ResponseWriter, r *http.Requ
 // using an access code in the Request URL.
 func (self *GitHubHandler) GetAccessToken(r *http.Request) (string, error) {
 
-	code := r.URL.Query().Get("code");
+	code := r.URL.Query().Get("code")
 	if code == "" {
 		return "", errors.New("No Access Code in the Request URL")
 	}
@@ -87,7 +86,7 @@ func (self *GitHubHandler) GetAccessToken(r *http.Request) (string, error) {
 	params := make(url.Values)
 	params.Add("scope", "users")
 	params.Add("code", code)
-	
+
 	return self.OAuth2Mixin.GetAccessToken(self.AccessTokenUrl, params, nil)
 }
 

@@ -10,14 +10,13 @@ import (
 
 // Abstract implementation of OAuth2 for user authentication.
 type OAuth2Mixin struct {
-	ClientId        string
-	ClientSecret    string
-	RedirectUrl     string
+	ClientId     string
+	ClientSecret string
+	RedirectUrl  string
 }
 
-
 func (self *OAuth2Mixin) GetAccessToken(endpoint string, params url.Values,
-												headers http.Header) (string, error) {
+	headers http.Header) (string, error) {
 
 	//create the access token url params
 	if params == nil {
@@ -46,7 +45,7 @@ func (self *OAuth2Mixin) GetAccessToken(endpoint string, params url.Values,
 
 	//set the header variables
 	req.Header = headers
-	
+
 	//HACK for Google implementation
 	//need to find a better way to handle this
 	if headers != nil {
@@ -72,10 +71,8 @@ func (self *OAuth2Mixin) GetAccessToken(endpoint string, params url.Values,
 	return string(accessToken), nil
 }
 
-
-
 func (self *OAuth2Mixin) AuthorizeRedirect(w http.ResponseWriter, r *http.Request,
-												endpoint string, params url.Values) {
+	endpoint string, params url.Values) {
 
 	if params == nil {
 		params = make(url.Values)
@@ -93,10 +90,9 @@ func (self *OAuth2Mixin) AuthorizeRedirect(w http.ResponseWriter, r *http.Reques
 	http.Redirect(w, r, loginUrl.String(), http.StatusSeeOther)
 }
 
-
-
 func (self *OAuth2Mixin) GetAuthenticatedUser(endpoint string, accessToken string,
-												headers http.Header, resp interface{}) error {
+	headers http.Header, resp interface{}) error {
+
 	//create the user url
 	endpointUrl, _ := url.Parse(endpoint)
 	endpointUrl.RawQuery = accessToken

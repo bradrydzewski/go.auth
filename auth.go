@@ -23,14 +23,13 @@ type AuthConfig struct {
 
 // Default configurations, can be set by the user
 var Config = &AuthConfig{
-	CookieName : "UID",
-	CookieExp : time.Hour * 24 * 14,
-	CookieMaxAge : 0,
-	LoginRedirect : "/auth/login",
-	LogoutSuccessRedirect : "/auth/login",
-	LoginSuccessRedirect : "/",
+	CookieName:            "UID",
+	CookieExp:             time.Hour * 24 * 14,
+	CookieMaxAge:          0,
+	LoginRedirect:         "/auth/login",
+	LogoutSuccessRedirect: "/auth/login",
+	LoginSuccessRedirect:  "/",
 }
-
 
 // Defines basic fields that should be
 // available for an authenticated User
@@ -42,27 +41,25 @@ type User interface {
 	Url() string
 }
 
-
 ////////////////////////////////////////////////////////////////////
 // Secure Cookie Functions
-
 
 // Creates a secure cookie for the given username, indicating the
 // user is authenticated.
 func SetUserCookie(w http.ResponseWriter, r *http.Request, user string) {
 
 	// cookie expires in 2 weeks
-    exp := time.Now().Add(Config.CookieExp)
+	exp := time.Now().Add(Config.CookieExp)
 
-    // generate cookie valid for 24 hours for user
-    value := authcookie.New(user, exp, Config.CookieSecret)
+	// generate cookie valid for 24 hours for user
+	value := authcookie.New(user, exp, Config.CookieSecret)
 
-    cookie := http.Cookie{
-        Name:   Config.CookieName,
-        Value:  value,
-        Path:   "/",
-        Domain: r.URL.Host,
-    }
+	cookie := http.Cookie{
+		Name:   Config.CookieName,
+		Value:  value,
+		Path:   "/",
+		Domain: r.URL.Host,
+	}
 
 	// if not a session cookie
 	if Config.CookieMaxAge > 0 {
@@ -70,14 +67,13 @@ func SetUserCookie(w http.ResponseWriter, r *http.Request, user string) {
 		cookie.MaxAge = Config.CookieMaxAge
 	}
 
-    http.SetCookie(w, &cookie)
+	http.SetCookie(w, &cookie)
 }
-
 
 // Removes a secure cookie that was created for the user's login session.
 // This effectively logs a user out of the system.
 func DeleteUserCookie(w http.ResponseWriter, r *http.Request) {
-    cookie := http.Cookie{
+	cookie := http.Cookie{
 		Name:   Config.CookieName,
 		Value:  "deleted",
 		Path:   "/",
@@ -85,16 +81,15 @@ func DeleteUserCookie(w http.ResponseWriter, r *http.Request) {
 		MaxAge: -1,
 	}
 
-    http.SetCookie(w, &cookie)
+	http.SetCookie(w, &cookie)
 }
-
 
 // GetUserCookie will get the Username from the
 // http session. If not active session, or if the session
 // has expired, then an error will be returned.
 func GetUserCookie(r *http.Request) (user string, err error) {
 	//look for the authcookie
-    cookie, err := r.Cookie(Config.CookieName)
+	cookie, err := r.Cookie(Config.CookieName)
 
 	//if doesn't exist (or is malformed) redirect
 	//back to the login url
@@ -102,34 +97,32 @@ func GetUserCookie(r *http.Request) (user string, err error) {
 		return "", err
 	}
 
-    login, expires, err := authcookie.Parse(cookie.Value, Config.CookieSecret)
+	login, expires, err := authcookie.Parse(cookie.Value, Config.CookieSecret)
 
 	//if there was an error parsing the cookie, redirect
 	//back to the login url
-    if err != nil {
+	if err != nil {
 		return "", err
 	}
 
 	//if the cookie is expired, redirect back to the
 	//login url
-    if time.Now().After(expires) {
+	if time.Now().After(expires) {
 		return "", errors.New("User session Expired")
-    }
+	}
 
 	return login, nil
 }
 
-
 ////////////////////////////////////////////////////////////////////
 // Wrapper funcs to Secure http.Handlers
-
 
 // Secure will attempt to verify a user session exists
 // prior to executing the http.Handler function. If no
 // valid sessions exists, the user will be redirected
 // to a login URL.
-func Secure (handler http.HandlerFunc) http.HandlerFunc {
-	return func (w http.ResponseWriter, r *http.Request) {
+func Secure(handler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		user, err := GetUserCookie(r)
 
 		//if no active user session then authorize user
@@ -165,6 +158,3 @@ func SecureAuthHandler(w http.ResponseWriter, r *http.Request) bool {
 	r.URL.User = url.User(user)
 	return true
 }
-
-
-
