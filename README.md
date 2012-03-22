@@ -34,7 +34,7 @@ Python's Tornado framework, specifically their auth module, was the main inspira
         // Setup Github oauth
         githubAccessKey := "wasdfoijlkwejiojdsklfjls"
         githubSecretKey := "sdlfkjsdfkljwelkjsdklfjsdfslkdfjwlk"
-        github := auth.NewGitHubAuth(githubAccessKey, githubSecretKey)
+        github := auth.NewGitHubHandler(githubAccessKey, githubSecretKey)
         
         // Restricted URLs
         http.HandleFunc("/", auth.Secure(WelcomeScreen))
@@ -88,7 +88,7 @@ Note: you can (and should) generate a unique key using the following unix comman
 
 Then we create an instance of a Github Oauth provider. We pass in our Github client id and secret key:
 
-    github := auth.NewGitHubAuth(githubAccessKey, githubSecretKey)
+    github := auth.NewGitHubHandler(githubAccessKey, githubSecretKey)
 
 Then we add our handlers using the standard `net/http` library:
 
