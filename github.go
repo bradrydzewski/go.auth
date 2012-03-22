@@ -1,24 +1,11 @@
 package auth
 
 import(
-	"encoding/json"
-	"io/ioutil"
+	"errors"
 	"net/http"
 	"net/url"
 )
 
-const (
-	GithubAuthUrl  = "https://github.com/login/oauth/authorize"
-	GithubTokenUrl = "https://github.com/login/oauth/access_token"
-	GithubUserUrl  = "https://api.github.com/user"
-)
-
-// GitHubAuth is an implementation of Github's Oauth2 protocol.
-// See http://developer.github.com/v3/oauth/
-type GitHubAuth struct {
-	ClientId     string
-	ClientSecret string
-}
 
 // GitHubUser represents a GitHub user
 // object returned by the Oauth service.
@@ -30,128 +17,105 @@ type GitHubUser struct {
     Link    string `json:"url"`
 }
 
-func NewGitHubAuth(clientId, clientSecret string) *GitHubAuth {
-	githubAuth := GitHubAuth{}
-	githubAuth.ClientId = clientId
-	githubAuth.ClientSecret = clientSecret
-	return &githubAuth
+func (u *GitHubUser) Username() string { 
+	return u.Link
 }
 
-func (this *GitHubAuth) Authorize(w http.ResponseWriter, r *http.Request) {
+func (u *GitHubUser) Password() string { 
+	return ""
+}
 
-	params := r.URL.Query()
+func (u *GitHubUser) Fullname() string {
+	return u.Name
+}
 
-	if code := params.Get("code"); code != "" {
-		//get the access token
-		accessToken, err := this.GetAccessToken(code)
+func (u *GitHubUser) Icon() string {
+	return u.Avatar
+}
+
+func (u *GitHubUser) Url() string {
+	return u.Link
+}
+
+// GitHubHandler is an implementation of Github's Oauth2 protocol.
+// See http://developer.github.com/v3/oauth/
+type GitHubHandler struct {
+	OAuth2Mixin
+
+	AuthorizeUrl    string
+	AccessTokenUrl  string
+	UserResourceUrl string
+}
+
+// NewGitHubHandler creates a new GitHubHandler.
+func NewGitHubHandler(clientId, clientSecret string) *GitHubHandler {
+	gitHub := GitHubHandler{}
+	gitHub.AuthorizeUrl = "https://github.com/login/oauth/authorize"
+	gitHub.AccessTokenUrl = "https://github.com/login/oauth/access_token"
+	gitHub.UserResourceUrl = "https://api.github.com/user"
+	gitHub.ClientId = clientId
+	gitHub.ClientSecret = clientSecret
+
+	return &gitHub
+}
+
+// GetAuthenticatedUser will use the Github User API to retrieve
+// user data for the given access token.
+func (self *GitHubHandler) GetAuthenticatedUser(accessToken string) (User, error) {
+	user := GitHubUser{}
+	err := self.OAuth2Mixin.GetAuthenticatedUser(self.UserResourceUrl, accessToken, nil, &user)
+	return &user, err
+}
+
+// AuthorizeRedirect will redirect the user to the Github
+// login screen for authorization.
+func (self *GitHubHandler) AuthorizeRedirect(w http.ResponseWriter, r *http.Request) {
+	params := make(url.Values)
+	params.Add("scope", "users")
+	self.OAuth2Mixin.AuthorizeRedirect(w, r, self.AuthorizeUrl, params)
+}
+
+// GetAccessToken will request an Access Token from Github
+// using an access code in the Request URL.
+func (self *GitHubHandler) GetAccessToken(r *http.Request) (string, error) {
+
+	code := r.URL.Query().Get("code");
+	if code == "" {
+		return "", errors.New("No Access Code in the Request URL")
+	}
+
+	params := make(url.Values)
+	params.Add("scope", "users")
+	params.Add("code", code)
+	
+	return self.OAuth2Mixin.GetAccessToken(self.AccessTokenUrl, params, nil)
+}
+
+/*
+func (self *GitHubHandler) HandlerFunc() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// attempt to get the access token
+		token, err := self.GetAccessToken(r)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			//if user not authorized, redirect
+			self.AuthorizeRedirect(w, r)
 			return
 		}
 
-		//get the github user data
-		user, err := this.GetAuthenticatedUser(accessToken)
+		// get the authorized user
+		user, err := self.GetAuthenticatedUser(token)
+
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			//if we can't get the user data, display an error message
+			http.Error(w, "", http.StatusForbidden)
 			return
-		}    
+		}
 
-		//authorize the user
-		LoginRedirect(w, r, user.Link)
-		return
+		// else, set the secure user cookie
+		SetUserCookie(w, r, user.Username())
+
+		// redirect the user now that they are logged in
+		http.Redirect(w, r, Config.LoginSuccessRedirect, http.StatusSeeOther)
 	}
-
-	//send to the github login
-	this.AuthorizeRedirect(w, r)
 }
-
-// Sends a user to the Github Login page.
-func (this *GitHubAuth) AuthorizeRedirect(w http.ResponseWriter, r *http.Request) {
-
-	// create github login url params
-	loginParams := make(url.Values)
-	//loginParams.Add("redirect_uri", redirectUrl.String())
-	loginParams.Add("client_id", this.ClientId)
-	loginParams.Add("scope", "users")
-
-	// create github url
-	loginUrl, _ := url.Parse(GithubAuthUrl)
-	loginUrl.RawQuery = loginParams.Encode()
-
-	// redirect to Github
-	http.Redirect(w, r, loginUrl.String(), http.StatusSeeOther)
-}
-
-// Retrieves an Access token using the provided access code.
-func (this *GitHubAuth) GetAccessToken(code string) (string, error) {
-	//First we need to get an Oauth access token
-	//create the access url params
-	accessParams := make(url.Values)
-	accessParams.Add("client_id", this.ClientId)
-	accessParams.Add("client_secret", this.ClientSecret)
-	accessParams.Add("code", code)
-
-	//create the access url
-	GithubAuthUrl, _ := url.Parse(GithubTokenUrl)
-	GithubAuthUrl.RawQuery = accessParams.Encode()
-
-	//create the http request
-	req := http.Request{
-		URL:        GithubAuthUrl,
-		Method:     "POST",
-		ProtoMajor: 1,
-		ProtoMinor: 1,
-		Close:      true,
-	}
-
-	//do the http request and get the response
-	resp, err := http.DefaultClient.Do(&req)
-	if err != nil {
-		return "", err
-	}
-
-	//get the response body
-	accessToken, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
-
-	if err != nil {
-		return "", err
-	}
-
-	return string(accessToken), nil
-}
-
-// Retrieves the Github User data for the given access token.
-func (this *GitHubAuth) GetAuthenticatedUser(accessToken string) (*GitHubUser, error) {
-
-	//create the user url
-	GithubUserUrl, _ := url.Parse(GithubUserUrl)
-	GithubUserUrl.RawQuery = accessToken
-
-	//create the http request for the user Url
-	req := http.Request{
-		URL:        GithubUserUrl,
-		Method:     "GET",
-		ProtoMajor: 1,
-		ProtoMinor: 1,
-		Close:      true,
-	}
-
-	//do the http request and get the response
-	resp, err := http.DefaultClient.Do(&req)
-	if err != nil {
-		return nil, err
-	}
-
-	//get the response body
-	userData, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	//unmarshal user json
-    gitHubUser := GitHubUser{}
-	json.Unmarshal(userData, &gitHubUser)
-	return &gitHubUser, nil
-}
+*/

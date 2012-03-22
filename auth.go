@@ -32,52 +32,67 @@ var Config = &AuthConfig{
 }
 
 
-// Secure will attempt to verify a user session exists
-// prior to executing the http.Handler function. If no
-// valid sessions exists, the user will be redirected
-// to a login URL.
-func Secure (handler http.HandlerFunc) http.HandlerFunc {
-	return func (w http.ResponseWriter, r *http.Request) {
-		user, err := GetAuthenticatedUser(r)
-
-		//if no active user session then authorize user
-		if user == "" || err != nil {
-			http.Redirect(w, r, Config.LoginRedirect, http.StatusSeeOther)
-			return
-		}
-
-		//else, add the user to the URL and continue
-		r.URL.User = url.User(user)
-		handler(w, r)
-	}
+// Defines basic fields that should be
+// available for an authenticated User
+type User interface {
+	Username() string
+	Password() string
+	Fullname() string
+	Icon() string
+	Url() string
 }
 
-// SecureAuthHandler will verify a user session exists.
-// If no user sessioin exists, the user will be redirected
-// to a login url. If a user session exists, the username
-// will be attached to the request.
-//
-// This function is included primarily to simplify integration
-// with the routes.go library.
-// See https://github.com/bradrydzewski/routes.go
-func SecureAuthHandler(w http.ResponseWriter, r *http.Request) bool {
-	user, err := GetAuthenticatedUser(r)
 
-	//if no active user session then authorize user
-	if user == "" || err != nil {
-		http.Redirect(w, r, Config.LoginRedirect, http.StatusSeeOther)
-		return false
+////////////////////////////////////////////////////////////////////
+// Secure Cookie Functions
+
+
+// Creates a secure cookie for the given username, indicating the
+// user is authenticated.
+func SetUserCookie(w http.ResponseWriter, r *http.Request, user string) {
+
+	// cookie expires in 2 weeks
+    exp := time.Now().Add(Config.CookieExp)
+
+    // generate cookie valid for 24 hours for user
+    value := authcookie.New(user, exp, Config.CookieSecret)
+
+    cookie := http.Cookie{
+        Name:   Config.CookieName,
+        Value:  value,
+        Path:   "/",
+        Domain: r.URL.Host,
+    }
+
+	// if not a session cookie
+	if Config.CookieMaxAge > 0 {
+		cookie.Expires = exp
+		cookie.MaxAge = Config.CookieMaxAge
 	}
 
-	//else, add the user to the URL and continue
-	r.URL.User = url.User(user)
-	return true
+    http.SetCookie(w, &cookie)
 }
 
-// GetAuthenticatedUser will get the Username from the
+
+// Removes a secure cookie that was created for the user's login session.
+// This effectively logs a user out of the system.
+func DeleteUserCookie(w http.ResponseWriter, r *http.Request) {
+    cookie := http.Cookie{
+		Name:   Config.CookieName,
+		Value:  "deleted",
+		Path:   "/",
+		Domain: r.URL.Host,
+		MaxAge: -1,
+	}
+
+    http.SetCookie(w, &cookie)
+}
+
+
+// GetUserCookie will get the Username from the
 // http session. If not active session, or if the session
 // has expired, then an error will be returned.
-func GetAuthenticatedUser(r *http.Request) (user string, err error) {
+func GetUserCookie(r *http.Request) (user string, err error) {
 	//look for the authcookie
     cookie, err := r.Cookie(Config.CookieName)
 
@@ -104,49 +119,52 @@ func GetAuthenticatedUser(r *http.Request) (user string, err error) {
 	return login, nil
 }
 
-// Login will create a user's session using a secure cookie, and
-// redirect back to the login url.
-func LoginRedirect(w http.ResponseWriter, r *http.Request, user string) {
 
-	// user id should not be null or blank
-	if user == "" {
-		return
+////////////////////////////////////////////////////////////////////
+// Wrapper funcs to Secure http.Handlers
+
+
+// Secure will attempt to verify a user session exists
+// prior to executing the http.Handler function. If no
+// valid sessions exists, the user will be redirected
+// to a login URL.
+func Secure (handler http.HandlerFunc) http.HandlerFunc {
+	return func (w http.ResponseWriter, r *http.Request) {
+		user, err := GetUserCookie(r)
+
+		//if no active user session then authorize user
+		if user == "" || err != nil {
+			http.Redirect(w, r, Config.LoginRedirect, http.StatusSeeOther)
+			return
+		}
+
+		//else, add the user to the URL and continue
+		r.URL.User = url.User(user)
+		handler(w, r)
 	}
-
-	// cookie expires in 2 weeks
-    exp := time.Now().Add(Config.CookieExp)
-
-    // generate cookie valid for 24 hours for user
-    value := authcookie.New(user, exp, Config.CookieSecret)
-
-    cookie := http.Cookie{
-        Name:   Config.CookieName,
-        Value:  value,
-        Path:   "/",
-        Domain: r.URL.Host,
-    }
-
-	// if not a session cookie
-	if Config.CookieMaxAge > 0 {
-		cookie.Expires = exp
-		cookie.MaxAge = Config.CookieMaxAge
-	}
-
-    http.SetCookie(w, &cookie)
-	http.Redirect(w, r, Config.LoginSuccessRedirect, http.StatusSeeOther)
 }
 
-// LogoutRedirect will terminate a user's session and redirect
-// to a login page, and redirect back to the login url.
-func LogoutRedirect(w http.ResponseWriter, r *http.Request) {
-    cookie := http.Cookie{
-		Name:   Config.CookieName,
-		Value:  "deleted",
-		Path:   "/",
-		Domain: r.URL.Host,
-		MaxAge: -1,
+// SecureAuthHandler will verify a user session exists.
+// If no user sessioin exists, the user will be redirected
+// to a login url. If a user session exists, the username
+// will be attached to the request.
+//
+// This function is included primarily to simplify integration
+// with the routes.go library.
+// See https://github.com/bradrydzewski/routes.go
+func SecureAuthHandler(w http.ResponseWriter, r *http.Request) bool {
+	user, err := GetUserCookie(r)
+
+	//if no active user session then authorize user
+	if user == "" || err != nil {
+		http.Redirect(w, r, Config.LoginRedirect, http.StatusSeeOther)
+		return false
 	}
 
-    http.SetCookie(w, &cookie)
-	http.Redirect(w, r, Config.LogoutSuccessRedirect, http.StatusSeeOther)
+	//else, add the user to the URL and continue
+	r.URL.User = url.User(user)
+	return true
 }
+
+
+

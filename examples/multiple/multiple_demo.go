@@ -74,12 +74,10 @@ func main() {
 
 	// set the auth parameters
 	auth.Config.CookieSecret = []byte("7H9xiimk2QdTdYI7rDddfJeV")
-	auth.Config.LoginSuccessRedirect = "/private"
-	auth.Config.LogoutSuccessRedirect = "/"
 
 	// get your google auth manager
-	google := auth.NewGoogleOAuth(*googleAccessKey, *googleSecretKey, googleRedirect)
-	github := auth.NewGitHubAuth(*githubAccessKey, *githubSecretKey)
+	google := auth.NewGoogleHandler(*googleAccessKey, *googleSecretKey, googleRedirect)
+	github := auth.NewGitHubHandler(*githubAccessKey, *githubSecretKey)
 
 	// public urls
 	http.HandleFunc("/", Public)
@@ -89,7 +87,8 @@ func main() {
 
 	// logout handler
     http.HandleFunc("/auth/logout", func (w http.ResponseWriter, r *http.Request) {
-		auth.LogoutRedirect(w, r)
+		auth.DeleteUserCookie(w, r)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	})
 
 	// login screen to choose auth provider
@@ -97,12 +96,54 @@ func main() {
 	
 	// google login handler
     http.HandleFunc("/auth/login/google", func (w http.ResponseWriter, r *http.Request) {
-		google.Authorize(w, r)
+		// attempt to get the access token
+		token, err := google.GetAccessToken(r)
+		if err != nil {
+			//if user not authorized, redirect
+			google.AuthorizeRedirect(w, r)
+			return
+		}
+
+		// get the authorized user
+		user, err := google.GetAuthenticatedUser(token)
+
+		if err != nil {
+			//if we can't get the user data, display an error message
+			http.Error(w, "", http.StatusForbidden)
+			return
+		}
+
+		// else, set the secure user cookie
+		auth.SetUserCookie(w, r, user.Username())
+
+		// redirect the user now that they are logged in
+		http.Redirect(w, r, "/private", http.StatusSeeOther)
 	})
 
 	// github login handler
     http.HandleFunc("/auth/login/github", func (w http.ResponseWriter, r *http.Request) {
-		github.Authorize(w, r)
+		// attempt to get the access token
+		token, err := github.GetAccessToken(r)
+		if err != nil {
+			//if user not authorized, redirect
+			github.AuthorizeRedirect(w, r)
+			return
+		}
+
+		// get the authorized user
+		user, err := github.GetAuthenticatedUser(token)
+
+		if err != nil {
+			//if we can't get the user data, display an error message
+			http.Error(w, "", http.StatusForbidden)
+			return
+		}
+
+		// else, set the secure user cookie
+		auth.SetUserCookie(w, r, user.Username())
+
+		// redirect the user now that they are logged in
+		http.Redirect(w, r, "/private", http.StatusSeeOther)
 	})
 
 	println("google demo starting on port 8080")

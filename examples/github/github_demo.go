@@ -53,11 +53,9 @@ func main() {
 
 	// set the auth parameters
 	auth.Config.CookieSecret = cookieSecret
-	auth.Config.LoginSuccessRedirect = "/private"
-	auth.Config.LogoutSuccessRedirect = "/"
 
 	// get your github auth manager
-	github := auth.NewGitHubAuth(*githubAccessKey, *githubSecretKey)
+	github := auth.NewGitHubHandler(*githubAccessKey, *githubSecretKey)
 
 	// public urls
 	http.HandleFunc("/", Public)
@@ -67,13 +65,36 @@ func main() {
 
 	// logout handler
     http.HandleFunc("/auth/logout", func (w http.ResponseWriter, r *http.Request) {
-		auth.LogoutRedirect(w, r)
+		auth.DeleteUserCookie(w, r)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	})
 	
 	// github login handler
     http.HandleFunc("/auth/login", func (w http.ResponseWriter, r *http.Request) {
-		github.Authorize(w, r)
+		// attempt to get the access token
+		token, err := github.GetAccessToken(r)
+		if err != nil {
+			//if user not authorized, redirect
+			github.AuthorizeRedirect(w, r)
+			return
+		}
+
+		// get the authorized user
+		user, err := github.GetAuthenticatedUser(token)
+
+		if err != nil {
+			//if we can't get the user data, display an error message
+			http.Error(w, "", http.StatusForbidden)
+			return
+		}
+
+		// else, set the secure user cookie
+		auth.SetUserCookie(w, r, user.Username())
+
+		// redirect the user now that they are logged in
+		http.Redirect(w, r, "/private", http.StatusSeeOther)
 	})
+
 
 	println("github demo starting on port 8080")
 	err := http.ListenAndServe(":8080", nil)

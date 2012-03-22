@@ -5,7 +5,8 @@ TARG=github.com/bradrydzewski/auth.go
 GOFILES=\
 	github.go\
 	google.go\
-	auth.go
+	auth.go\
+	oauth.go
 
 include $(GOROOT)/src/Make.pkg
 
