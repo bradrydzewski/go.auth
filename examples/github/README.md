@@ -9,7 +9,7 @@ You will need to login to your Github account and [register an application](http
 * Click the "Register New Application" button
 * Give your application an awesome name
 * Set the Main URL to `http://localhost:8080/`
-* Set the Callback URL to `http://localhost:8080/auth/login/github`
+* Set the Callback URL to `http://localhost:8080/auth/login`
 * Click the "Register Application" button
 
 When you click the Register Application button you will be given the Client Id and Secret Key, which will look something like this:

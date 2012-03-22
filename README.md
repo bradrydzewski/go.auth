@@ -1,11 +1,10 @@
 # auth.go
 an http authentication API for the Go programming language. Integrates with 3rd party auth providers to add security to your web application. Current Github and Google Oauth2 are supported.
 
+	go get github.com/dchest/authcookie
     go get github.com/bradrydzewski/auth.go
     
-you will first need to install the following dependencies:
-
-    go get github.com/dchest/authcookie
+Python's Tornado framework, specifically their auth module, was the main inspiration for this library.
 
 ## Getting Started
 
@@ -43,8 +42,34 @@ you will first need to install the following dependencies:
         http.HandleFunc("/billing", auth.Secure(BillingInfo))
         
         // Login / Logout Pages
-        http.HandleFunc("/auth/login",  func (w http.ResponseWriter, r *http.Request) { github.Authorize(w, r) })
-        http.HandleFunc("/auth/logout", func (w http.ResponseWriter, r *http.Request) { auth.LogoutRedirect(w, r) })
+        http.HandleFunc("/auth/logout", func (w http.ResponseWriter, r *http.Request) {
+			auth.DeleteUserCookie(w, r)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+        })
+		http.HandleFunc("/auth/login",  func (w http.ResponseWriter, r *http.Request) {
+			// attempt to get the access token
+			token, err := github.GetAccessToken(r)
+			if err != nil {
+				//if user not authorized, redirect
+				github.AuthorizeRedirect(w, r)
+				return
+			}
+
+			// get the authorized user
+			user, err := github.GetAuthenticatedUser(token)
+
+			if err != nil {
+				//if we can't get the user data, display an error message
+				http.Error(w, "", http.StatusForbidden)
+				return
+			}
+
+			// else, set the secure user cookie
+			auth.SetUserCookie(w, r, user.Username())
+
+			// redirect the user now that they are logged in
+			http.Redirect(w, r, "/private", http.StatusSeeOther)
+        })
 
         http.ListenAndServe(":8080", nil)
     }
@@ -76,9 +101,31 @@ We can easily secure this URL by wrapping it in the `Secure` function:
 By default, `auth.go` will route any unauthenticated users to `/auth/login`. Therefore we need to create a route for `/auth/login` that initiates the Github Oauth login flow:
 
     http.HandleFunc("/auth/login",  func (w http.ResponseWriter, r *http.Request) {
-        github.Authorize(w, r)
+		// attempt to get the access token
+		token, err := github.GetAccessToken(r)
+		if err != nil {
+			//if user not authorized, redirect
+			github.AuthorizeRedirect(w, r)
+			return
+		}
+
+		// get the authorized user
+		user, err := github.GetAuthenticatedUser(token)
+
+		if err != nil {
+			//if we can't get the user data, display an error message
+			http.Error(w, "", http.StatusForbidden)
+			return
+		}
+
+		// else, set the secure user cookie
+		auth.SetUserCookie(w, r, user.Username())
+
+		// redirect the user now that they are logged in
+		http.Redirect(w, r, "/private", http.StatusSeeOther)
     })
-    
+
+
 ### User data
 The user data is passed to your Handler via the URL's `User` field:
 
@@ -129,7 +176,7 @@ The user data is passed to your Handler via the URL's `User` field:
 
 Example:
 
-    auth.Config.LoginSuccessRedirect = "/account"
+    auth.Config.LoginRedirect = "/login"
     
 ## routes.go
 To integrate with the [routes.go](https://github.com/bradrydzewski/routes.go) library check out the `/examples/routes` demo application.
