@@ -34,11 +34,14 @@ var Config = &AuthConfig{
 // Defines basic fields that should be
 // available for an authenticated User
 type User interface {
+	Userid() int64
 	Username() string
 	Password() string
 	Fullname() string
+	EmailAddr() string
 	Icon() string
 	Url() string
+	Provider() string
 }
 
 ////////////////////////////////////////////////////////////////////

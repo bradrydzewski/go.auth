@@ -10,19 +10,27 @@ import (
 // GoogleUser represents a Google user
 // object returned by the Oauth service.
 type GoogleUser struct {
-	Id      string `json:"id"`
+	Id      int64  `json:"id,string"`
 	Email   string `json:"email"`
 	Picture string `json:"picture"`
 	Name    string `json:"name"`
 	Link    string `json:"link"`
 }
 
+func (u *GoogleUser) Userid() int64 {
+	return u.Id
+}
+
 func (u *GoogleUser) Username() string {
-	return u.Link
+	return u.Email
 }
 
 func (u *GoogleUser) Password() string {
 	return ""
+}
+
+func (u *GoogleUser) EmailAddr() string {
+	return u.Email
 }
 
 func (u *GoogleUser) Fullname() string {
@@ -35,6 +43,10 @@ func (u *GoogleUser) Icon() string {
 
 func (u *GoogleUser) Url() string {
 	return u.Link
+}
+
+func (u *GoogleUser) Provider() string {
+	return "google.com"
 }
 
 // GoogleHandler is an implementation of Google's Oauth2 
@@ -53,8 +65,8 @@ func NewGoogleHandler(clientId, clientSecret, redirectUrl string) *GoogleHandler
 	goog := GoogleHandler{}
 	goog.AuthorizeUrl = "https://accounts.google.com/o/oauth2/auth"
 	goog.AccessTokenUrl = "https://accounts.google.com/o/oauth2/token"
-	goog.UserResourceUrl = "https://www.googleapis.com/oauth2/v1/userinfo"
-	goog.UserResourceScope = "https://www.googleapis.com/auth/userinfo.profile"
+	goog.UserResourceUrl = "https://www.googleapis.com/oauth2/v2/userinfo"
+	goog.UserResourceScope = "https://www.googleapis.com/auth/userinfo.profile+https://www.googleapis.com/auth/userinfo.email"
 	goog.ClientId = clientId
 	goog.ClientSecret = clientSecret
 	goog.RedirectUrl = redirectUrl

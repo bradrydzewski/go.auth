@@ -9,6 +9,7 @@ import (
 // GitHubUser represents a GitHub user
 // object returned by the Oauth service.
 type GitHubUser struct {
+	Id     int64  `json:"id"`
 	Email  string `json:"email"`
 	Avatar string `json:"avatar_url"`
 	Name   string `json:"name"`
@@ -16,12 +17,20 @@ type GitHubUser struct {
 	Link   string `json:"url"`
 }
 
+func (u *GitHubUser) Userid() int64 {
+	return u.Id
+}
+
 func (u *GitHubUser) Username() string {
-	return u.Link
+	return u.Login
 }
 
 func (u *GitHubUser) Password() string {
 	return ""
+}
+
+func (u *GitHubUser) EmailAddr() string {
+	return u.Email
 }
 
 func (u *GitHubUser) Fullname() string {
@@ -34,6 +43,10 @@ func (u *GitHubUser) Icon() string {
 
 func (u *GitHubUser) Url() string {
 	return u.Link
+}
+
+func (u *GitHubUser) Provider() string {
+	return "github.com"
 }
 
 // GitHubHandler is an implementation of Github's Oauth2 protocol.

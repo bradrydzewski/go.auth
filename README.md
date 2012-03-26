@@ -16,6 +16,10 @@ Python's Tornado framework, specifically their auth module, was the main inspira
         "net/http"
     )
 
+    func WelcomeScreen(w http.ResponseWriter, r *http.Request) {
+        fmt.Fprintf(w, "welcome to auth.go demo. Login at /auth/login")
+    }
+
     func AccountInfo(w http.ResponseWriter, r *http.Request) {
         user := r.URL.User.Username()
         fmt.Fprintf(w, "account info for %s", user)
@@ -37,7 +41,7 @@ Python's Tornado framework, specifically their auth module, was the main inspira
         github := auth.NewGitHubHandler(githubAccessKey, githubSecretKey)
         
         // Restricted URLs
-        http.HandleFunc("/", auth.Secure(WelcomeScreen))
+        http.HandleFunc("/", WelcomeScreen)
         http.HandleFunc("/account", auth.Secure(AccountInfo))
         http.HandleFunc("/billing", auth.Secure(BillingInfo))
         
@@ -92,11 +96,11 @@ Then we create an instance of a Github Oauth provider. We pass in our Github cli
 
 Then we add our handlers using the standard `net/http` library:
 
-    http.HandleFunc("/auth", AccountInfo)
+    http.HandleFunc("/account", AccountInfo)
     
 We can easily secure this URL by wrapping it in the `Secure` function:
 
-    http.HandleFunc("/auth", auth.Secure(AccountInfo))
+    http.HandleFunc("/account", auth.Secure(AccountInfo))
     
 By default, `auth.go` will route any unauthenticated users to `/auth/login`. Therefore we need to create a route for `/auth/login` that initiates the Github Oauth login flow:
 

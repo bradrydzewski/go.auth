@@ -86,6 +86,10 @@ func (self *OAuth2Mixin) AuthorizeRedirect(w http.ResponseWriter, r *http.Reques
 	loginUrl, _ := url.Parse(endpoint)
 	loginUrl.RawQuery = params.Encode()
 
+	//HACK encode() with encode the "+" that separates the scopes
+	//we will do a find / replace to change this
+	loginUrl.RawQuery = strings.Replace(loginUrl.RawQuery, "%2B", "+", -1)
+
 	// redirect to login
 	http.Redirect(w, r, loginUrl.String(), http.StatusSeeOther)
 }
