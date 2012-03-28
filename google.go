@@ -10,14 +10,14 @@ import (
 // GoogleUser represents a Google user
 // object returned by the Oauth service.
 type GoogleUser struct {
-	Id      int64  `json:"id,string"`
+	Id      string `json:"id"`
 	Email   string `json:"email"`
 	Picture string `json:"picture"`
 	Name    string `json:"name"`
 	Link    string `json:"link"`
 }
 
-func (u *GoogleUser) Userid() int64 {
+func (u *GoogleUser) Userid() string {
 	return u.Id
 }
 

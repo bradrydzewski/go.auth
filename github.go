@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
 // GitHubUser represents a GitHub user
@@ -17,8 +18,8 @@ type GitHubUser struct {
 	Link   string `json:"url"`
 }
 
-func (u *GitHubUser) Userid() int64 {
-	return u.Id
+func (u *GitHubUser) Userid() string {
+	return strconv.FormatInt(int64(u.Id), 10)
 }
 
 func (u *GitHubUser) Username() string {
