@@ -2,9 +2,8 @@ package main
 
 import (
 	"fmt"
-	"flag"
-    "net/http"
 	"github.com/bradrydzewski/go.auth"
+	"net/http"
 )
 
 var homepage = `
@@ -13,8 +12,8 @@ var homepage = `
 		<title>Login</title>
 	</head>
 	<body>
-		<div>Welcome to the auth.go Github demo</div>
-		<div><a href="/auth/login">Authenticate with your Github Id</a><div>
+		<div>Welcome to the go.auth OpenId demo</div>
+		<div><a href="/auth/login">Authenticate with your Google Id</a><div>
 	</body>
 </html>
 `
@@ -61,19 +60,13 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 
-	// You should pass in your client key and secret key as args.
-	// Or you can set your access key and secret key by replacing the default values below (2nd input param in flag.String)
-	githubClientKey := flag.String("client_key", "[your github client key]", "your oauth client key")
-	githubSecretKey := flag.String("secret_key", "[your github secret key]", "your oauth secret key")
-	flag.Parse()
-
 	// set the auth parameters
 	auth.Config.CookieSecret = []byte("7H9xiimk2QdTdYI7rDddfJeV")
 
 	// create the auth multiplexer
-	githubHandler := auth.NewGitHubHandler(*githubClientKey, *githubSecretKey)
+	googleHandler := auth.NewGoogleOpenIdHandler()
 	authMux := auth.NewAuthMux(LoginSuccess, LoginFailure)
-	authMux.Handle("/auth/login", githubHandler)
+	authMux.Handle("/auth/login", googleHandler)
 
 	// public urls
 	http.HandleFunc("/", Public)
@@ -82,30 +75,14 @@ func main() {
 	http.HandleFunc("/private", auth.Secure(Private))
 
 	// logout handler
-    http.HandleFunc("/auth/logout", Logout)
+	http.HandleFunc("/auth/logout", Logout)
 
 	// login handler
 	http.Handle("/auth/login", authMux)
 
-
-	println("github demo starting on port 8080")
+	println("openid demo starting on port 8080")
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		fmt.Println(err)
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

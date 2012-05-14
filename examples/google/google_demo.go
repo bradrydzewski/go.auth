@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"flag"
     "net/http"
-	"github.com/bradrydzewski/auth.go"
+	"github.com/bradrydzewski/go.auth"
 )
 
 var homepage = `
@@ -42,6 +42,23 @@ func Public(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, homepage)
 }
 
+// login success callback
+func LoginSuccess(w http.ResponseWriter, r *http.Request, u auth.User) {
+	auth.SetUserCookie(w, r, u.Username())
+	http.Redirect(w, r, "/private", http.StatusSeeOther)
+}
+
+// login failure callback
+func LoginFailure(w http.ResponseWriter, r *http.Request, err error) {
+	http.Error(w, err.Error(), http.StatusForbidden)
+}
+
+// logout handler
+func Logout(w http.ResponseWriter, r *http.Request) {
+	auth.DeleteUserCookie(w, r)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
 func main() {
 
 	// You should pass in your access key and secret key as args.
@@ -56,8 +73,11 @@ func main() {
 	// set the auth parameters
 	auth.Config.CookieSecret = []byte("7H9xiimk2QdTdYI7rDddfJeV")
 
-	// get your google auth manager
-	google := auth.NewGoogleHandler(*googleAccessKey, *googleSecretKey, googleRedirect)
+
+	// create the auth multiplexer
+	googHandler := auth.NewGoogleHandler(*googleAccessKey, *googleSecretKey, googleRedirect)
+	authMux := auth.NewAuthMux(LoginSuccess, LoginFailure)
+	authMux.Handle("/auth/login", googHandler)
 
 	// public urls
 	http.HandleFunc("/", Public)
@@ -66,36 +86,11 @@ func main() {
 	http.HandleFunc("/private", auth.Secure(Private))
 
 	// logout handler
-    http.HandleFunc("/auth/logout", func (w http.ResponseWriter, r *http.Request) {
-		auth.DeleteUserCookie(w, r)
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-	})
-	
-	// google login handler
-    http.HandleFunc("/auth/login", func (w http.ResponseWriter, r *http.Request) {
-		// attempt to get the access token
-		token, err := google.GetAccessToken(r)
-		if err != nil {
-			//if user not authorized, redirect
-			google.AuthorizeRedirect(w, r)
-			return
-		}
+    http.HandleFunc("/auth/logout", Logout)
 
-		// get the authorized user
-		user, err := google.GetAuthenticatedUser(token)
+	// login handler
+	http.Handle("/auth/login", authMux)
 
-		if err != nil {
-			//if we can't get the user data, display an error message
-			http.Error(w, "", http.StatusForbidden)
-			return
-		}
-
-		// else, set the secure user cookie
-		auth.SetUserCookie(w, r, user.Username())
-
-		// redirect the user now that they are logged in
-		http.Redirect(w, r, "/private", http.StatusSeeOther)
-	})
 
 	println("google demo starting on port 8080")
 	err := http.ListenAndServe(":8080", nil)

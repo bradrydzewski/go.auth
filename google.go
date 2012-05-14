@@ -7,8 +7,7 @@ import (
 	"net/url"
 )
 
-// GoogleUser represents a Google user
-// object returned by the Oauth service.
+// GoogleUser represents a Google user object returned by the OAuth2 service.
 type GoogleUser struct {
 	Id      string `json:"id"`
 	Email   string `json:"email"`
@@ -73,17 +72,16 @@ func NewGoogleHandler(clientId, clientSecret, redirectUrl string) *GoogleHandler
 	return &goog
 }
 
-func (self *GoogleHandler) GetAuthenticatedUser(accessToken string) (User, error) {
-
-	header := make(http.Header)
-	header.Add("Authorization", "OAuth "+accessToken)
-
-	user := &GoogleUser{}
-	err := self.OAuth2Mixin.GetAuthenticatedUser(self.UserResourceUrl, accessToken, header, user)
-	return user, err
+// RedirectRequired returns a boolean value indicating if the request should
+// be redirected to the Google login screen, in order to provide an OAuth
+// Access Token.
+func (self *GoogleHandler) RedirectRequired(r *http.Request) bool {
+	return r.URL.Query().Get("code") == ""
 }
 
-func (self *GoogleHandler) AuthorizeRedirect(w http.ResponseWriter, r *http.Request) {
+// Redirect will do an http.Redirect, sending the user to the Google login
+// screen.
+func (self *GoogleHandler) Redirect(w http.ResponseWriter, r *http.Request) {
 	params := make(url.Values)
 	params.Add("response_type", "code")
 	params.Add("scope", self.UserResourceScope)
@@ -92,6 +90,25 @@ func (self *GoogleHandler) AuthorizeRedirect(w http.ResponseWriter, r *http.Requ
 	self.OAuth2Mixin.AuthorizeRedirect(w, r, self.AuthorizeUrl, params)
 }
 
+// GetAuthenticatedUser will retrieve the Authentication User from the
+// http.Request object.
+func (self *GoogleHandler) GetAuthenticatedUser(r *http.Request) (User, error) {
+	// Get the OAuth2 Access Token
+	token, err := self.GetAccessToken(r)
+	if err != nil {
+		return nil, err
+	}
+
+	// Use the Access Token to retrieve the user's information
+	header := make(http.Header)
+	header.Add("Authorization", "OAuth "+token)
+
+	user := GoogleUser{}
+	err = self.OAuth2Mixin.GetAuthenticatedUser(self.UserResourceUrl, token, header, &user)
+	return &user, err
+}
+
+// GetAccessToken will retrieve the Access Token from the http.Request URL.
 func (self *GoogleHandler) GetAccessToken(r *http.Request) (string, error) {
 
 	code := r.URL.Query().Get("code")
@@ -121,10 +138,42 @@ func (self *GoogleHandler) GetAccessToken(r *http.Request) (string, error) {
 	return token.AccessToken, nil
 }
 
-// GoogleTokenResp represents the response data type
-// returned from an Access Token request
+// GoogleTokenResp represents the response data type returned from an Access
+// Token request
 type GoogleTokenResp struct {
 	AccessToken string `json:"access_token"`
 	ExpiresIn   int32  `json:"expires_in"`
 	TokenType   string `json:"token_type"`
 }
+
+
+
+
+/*
+
+DEAD CODE  ... REMOVE ME
+
+func (self *GoogleHandler) GetAuthenticatedUser(accessToken string) (User, error) {
+
+	header := make(http.Header)
+	header.Add("Authorization", "OAuth "+accessToken)
+
+	user := &GoogleUser{}
+	err := self.OAuth2Mixin.GetAuthenticatedUser(self.UserResourceUrl, accessToken, header, user)
+	return user, err
+}
+
+func (self *GoogleHandler) AuthorizeRedirect(w http.ResponseWriter, r *http.Request) {
+	params := make(url.Values)
+	params.Add("response_type", "code")
+	params.Add("scope", self.UserResourceScope)
+	params.Add("access_type", "offline")
+
+	self.OAuth2Mixin.AuthorizeRedirect(w, r, self.AuthorizeUrl, params)
+}
+*/
+
+
+
+
+

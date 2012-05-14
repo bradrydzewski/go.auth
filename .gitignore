@@ -40,6 +40,10 @@ Thumbs.db
 *.6
 *.out
 /_obj
+/examples/github/github
+/examples/google/google
+/examples/openid/openid
+
 
 # Other #
 #########

@@ -7,8 +7,7 @@ import (
 	"strconv"
 )
 
-// GitHubUser represents a GitHub user
-// object returned by the Oauth service.
+// GitHubUser represents a GitHub user object returned by the OAuth2 service.
 type GitHubUser struct {
 	Id     int64  `json:"id"`
 	Email  string `json:"email"`
@@ -72,9 +71,65 @@ func NewGitHubHandler(clientId, clientSecret string) *GitHubHandler {
 	return &gitHub
 }
 
+// RedirectRequired returns a boolean value indicating if the request should
+// be redirected to the Github login screen, in order to provide an OAuth
+// Access Token.
+func (self *GitHubHandler) RedirectRequired(r *http.Request) bool {
+	return r.URL.Query().Get("code") == ""
+}
+
+// Redirect will do an http.Redirect, sending the user to the Github login
+// screen.
+func (self *GitHubHandler) Redirect(w http.ResponseWriter, r *http.Request) {
+	params := make(url.Values)
+	params.Add("scope", "users")
+	self.OAuth2Mixin.AuthorizeRedirect(w, r, self.AuthorizeUrl, params)
+}
+
+// GetAuthenticatedUser will retrieve the Authentication User from the
+// http.Request object.
+func (self *GitHubHandler) GetAuthenticatedUser(r *http.Request) (User, error) {
+	// Get the OAuth2 Access Token
+	token, err := self.GetAccessToken(r)
+	if err != nil {
+		return nil, err
+	}
+
+	// Use the Access Token to retrieve the user's information
+	user := GitHubUser{}
+	err = self.OAuth2Mixin.GetAuthenticatedUser(self.UserResourceUrl, token, nil, &user)
+	return &user, err
+}
+
+// GetAccessToken will retrieve the Access Token from the http.Request URL.
+func (self *GitHubHandler) GetAccessToken(r *http.Request) (string, error) {
+
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		return "", errors.New("No Access Code in the Request URL")
+	}
+
+	params := make(url.Values)
+	params.Add("scope", "users")
+	params.Add("code", code)
+
+	return self.OAuth2Mixin.GetAccessToken(self.AccessTokenUrl, params, nil)
+}
+
+
+
+
+
+
+
+
+/*
+DEAD CODE ... REMOVE ME
+
+
 // GetAuthenticatedUser will use the Github User API to retrieve
 // user data for the given access token.
-func (self *GitHubHandler) GetAuthenticatedUser(accessToken string) (User, error) {
+func (self *GitHubHandler) GetAuthenticatedUser2(accessToken string) (User, error) {
 	user := GitHubUser{}
 	err := self.OAuth2Mixin.GetAuthenticatedUser(self.UserResourceUrl, accessToken, nil, &user)
 	return &user, err
@@ -103,6 +158,8 @@ func (self *GitHubHandler) GetAccessToken(r *http.Request) (string, error) {
 
 	return self.OAuth2Mixin.GetAccessToken(self.AccessTokenUrl, params, nil)
 }
+*/
+
 
 /*
 func (self *GitHubHandler) HandlerFunc() http.HandlerFunc {
