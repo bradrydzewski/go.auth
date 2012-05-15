@@ -1,143 +1,95 @@
-# auth.go
-an http authentication API for the Go programming language. Integrates with 3rd party auth providers to add security to your web application. Current Github and Google Oauth2 are supported.
+# go.auth
+an http authentication API for the Go programming language. Integrates with 3rd party auth providers to add security to your web application.
 
 	go get github.com/dchest/authcookie
-    go get github.com/bradrydzewski/auth.go
+    go get github.com/bradrydzewski/go.auth
     
 Python's Tornado framework, specifically their auth module, was the main inspiration for this library.
 
-## Getting Started
+## Providers
+The following auth providers are supported:
 
-    package main
+* Github OAuth2 [demo](https://github.com/bradrydzewski/go.auth/tree/master/examples/github)
+* Google OAuth2 [demo](https://github.com/bradrydzewski/go.auth/tree/master/examples/google)
+* Google OpenId [demo](https://github.com/bradrydzewski/go.auth/tree/master/examples/openid)
 
-    import (
-        "fmt"
-        "github.com/bradrydzewski/auth.go"
-        "net/http"
-    )
+We plan to add support for the following providers:
 
-    func WelcomeScreen(w http.ResponseWriter, r *http.Request) {
-        fmt.Fprintf(w, "welcome to auth.go demo. Login at /auth/login")
-    }
+* Facebook
+* Twitter
+* LinkedIn
 
-    func AccountInfo(w http.ResponseWriter, r *http.Request) {
-        user := r.URL.User.Username()
-        fmt.Fprintf(w, "account info for %s", user)
-    }
-    
-    func BillingInfo(w http.ResponseWriter, r *http.Request) {
-        user := r.URL.User.Username()
-        fmt.Fprintf(w, "billing info for %s", user)
-    }
+# Sample Code
+Example program using the Google OpenId auth provider:
 
-    func main() {
+```go
+package main
 
-        // Configure the secure cookie secret
-        auth.Config.CookieSecret = []byte("7H9xiimk2QdTdYI7rDddfJeV")
-        
-        // Setup Github oauth
-        githubAccessKey := "wasdfoijlkwejiojdsklfjls"
-        githubSecretKey := "sdlfkjsdfkljwelkjsdklfjsdfslkdfjwlk"
-        github := auth.NewGitHubHandler(githubAccessKey, githubSecretKey)
-        
-        // Restricted URLs
-        http.HandleFunc("/", WelcomeScreen)
-        http.HandleFunc("/account", auth.Secure(AccountInfo))
-        http.HandleFunc("/billing", auth.Secure(BillingInfo))
-        
-        // Login / Logout Pages
-        http.HandleFunc("/auth/logout", func (w http.ResponseWriter, r *http.Request) {
-			auth.DeleteUserCookie(w, r)
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-        })
-		http.HandleFunc("/auth/login",  func (w http.ResponseWriter, r *http.Request) {
-			// attempt to get the access token
-			token, err := github.GetAccessToken(r)
-			if err != nil {
-				//if user not authorized, redirect
-				github.AuthorizeRedirect(w, r)
-				return
-			}
+import (
+	"fmt"
+	"github.com/bradrydzewski/go.auth"
+	"net/http"
+)
 
-			// get the authorized user
-			user, err := github.GetAuthenticatedUser(token)
+// private webpage, authentication required
+func Private(w http.ResponseWriter, r *http.Request) {
+	user := r.URL.User.Username()
+	fmt.Fprintf(w, fmt.Sprintf(privatepage, user, user))
+}
 
-			if err != nil {
-				//if we can't get the user data, display an error message
-				http.Error(w, "", http.StatusForbidden)
-				return
-			}
+// public webpage, no authentication required
+func Public(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, homepage)
+}
 
-			// else, set the secure user cookie
-			auth.SetUserCookie(w, r, user.Username())
+// login success callback
+func LoginSuccess(w http.ResponseWriter, r *http.Request, u auth.User) {
+	auth.SetUserCookie(w, r, u.Username())
+	http.Redirect(w, r, "/private", http.StatusSeeOther)
+}
 
-			// redirect the user now that they are logged in
-			http.Redirect(w, r, "/private", http.StatusSeeOther)
-        })
+// login failure callback
+func LoginFailure(w http.ResponseWriter, r *http.Request, err error) {
+	http.Error(w, err.Error(), http.StatusForbidden)
+}
 
-        http.ListenAndServe(":8080", nil)
-    }
+func main() {
 
-### Breakdown
-Let's breakdown each block of code in the above example.
+	// set the auth parameters
+	auth.Config.CookieSecret = []byte("7H9xiimk2QdTdYI7rDddfJeV")
 
-First we set the Cookie secret. User session are stored in secure cookies, using the authcookie library:
+	// create the auth multiplexer
+	googleHandler := auth.NewGoogleOpenIdHandler()
+	authMux := auth.NewAuthMux(LoginSuccess, LoginFailure)
+	authMux.Handle("/auth/login", googleHandler)
 
-    auth.Config.CookieSecret = []byte("7H9xiimk2QdTdYI7rDddfJeV")
+	// public urls
+	http.HandleFunc("/", Public)
 
-Note: you can (and should) generate a unique key using the following unix command:
+	// private, secured urls
+	http.HandleFunc("/private", auth.Secure(Private))
 
-    $> openssl rand -hex 32
-    $> eae007a2b632ececad1a42ce074e3f84015d6dcb624a3d0a86b9612e196464aa
+	// login handler
+	http.Handle("/auth/login", authMux)
 
-Then we create an instance of a Github Oauth provider. We pass in our Github client id and secret key:
+	println("openid demo starting on port 8080")
+	err := http.ListenAndServe(":8080", nil)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+```
 
-    github := auth.NewGitHubHandler(githubAccessKey, githubSecretKey)
-
-Then we add our handlers using the standard `net/http` library:
-
-    http.HandleFunc("/account", AccountInfo)
-    
-We can easily secure this URL by wrapping it in the `Secure` function:
-
-    http.HandleFunc("/account", auth.Secure(AccountInfo))
-    
-By default, `auth.go` will route any unauthenticated users to `/auth/login`. Therefore we need to create a route for `/auth/login` that initiates the Github Oauth login flow:
-
-    http.HandleFunc("/auth/login",  func (w http.ResponseWriter, r *http.Request) {
-		// attempt to get the access token
-		token, err := github.GetAccessToken(r)
-		if err != nil {
-			//if user not authorized, redirect
-			github.AuthorizeRedirect(w, r)
-			return
-		}
-
-		// get the authorized user
-		user, err := github.GetAuthenticatedUser(token)
-
-		if err != nil {
-			//if we can't get the user data, display an error message
-			http.Error(w, "", http.StatusForbidden)
-			return
-		}
-
-		// else, set the secure user cookie
-		auth.SetUserCookie(w, r, user.Username())
-
-		// redirect the user now that they are logged in
-		http.Redirect(w, r, "/private", http.StatusSeeOther)
-    })
-
-
-### User data
+## User data
 The user data is passed to your Handler via the URL's `User` field:
 
-    func MyHandler(w http.ResponseWriter, r *http.Request) {
-        user := r.URL.User.Username()
-    }
-    
-## Configuration
+```go
+func Foo(w http.ResponseWriter, r *http.Request) {
+	user := r.URL.User.Username()
+}
+```
+
+# Configuration
 `auth.go` uses the following default parameters which can be configured:
 
 <table>
@@ -166,21 +118,11 @@ The user data is passed to your Handler via the URL's `User` field:
  <td>where to re-direct a user that is not authenticated</td>
  <td>"/auth/login"</td>
 </tr>
-<tr>
- <td>auth.Config.LoginSuccessRedirect</td>
- <td>where to re-direct a user after successful auth</td>
- <td>"/"</td>
-</tr>
-<tr>
- <td>auth.Config.LogoutSuccessRedirect</td>
- <td>where to re-direct a user after logout</td>
- <td>"/auth/login"</td>
-</tr>
 </table>
 
 Example:
 
-    auth.Config.LoginRedirect = "/login"
-    
-## routes.go
-To integrate with the [routes.go](https://github.com/bradrydzewski/routes.go) library check out the `/examples/routes` demo application.
+```go
+auth.Config.LoginRedirect = "/auth/login"
+```
+
