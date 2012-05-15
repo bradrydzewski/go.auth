@@ -72,20 +72,19 @@ func main() {
 
 	// create the auth multiplexer
 	githubHandler := auth.NewGitHubHandler(*githubClientKey, *githubSecretKey)
-	authMux := auth.NewAuthMux(LoginSuccess, LoginFailure)
-	authMux.Handle("/auth/login", githubHandler)
+	auth.Handle("/auth/login", githubHandler)
 
 	// public urls
 	http.HandleFunc("/", Public)
 
 	// private, secured urls
-	http.HandleFunc("/private", auth.Secure(Private))
+	http.HandleFunc("/private", auth.SecureFunc(Private))
 
 	// logout handler
     http.HandleFunc("/auth/logout", Logout)
 
 	// login handler
-	http.Handle("/auth/login", authMux)
+	http.Handle("/auth/login", auth.DefaultAuthMux)
 
 
 	println("github demo starting on port 8080")

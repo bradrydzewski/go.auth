@@ -65,20 +65,19 @@ func main() {
 
 	// create the auth multiplexer
 	googleHandler := auth.NewGoogleOpenIdHandler()
-	authMux := auth.NewAuthMux(LoginSuccess, LoginFailure)
-	authMux.Handle("/auth/login", googleHandler)
+	auth.Handle("/auth/login", googleHandler)
 
 	// public urls
 	http.HandleFunc("/", Public)
 
 	// private, secured urls
-	http.HandleFunc("/private", auth.Secure(Private))
+	http.HandleFunc("/private", auth.SecureFunc(Private))
 
 	// logout handler
 	http.HandleFunc("/auth/logout", Logout)
 
 	// login handler
-	http.Handle("/auth/login", authMux)
+	http.Handle("/auth/login", auth.DefaultAuthMux)
 
 	println("openid demo starting on port 8080")
 	err := http.ListenAndServe(":8080", nil)
