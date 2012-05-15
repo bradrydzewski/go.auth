@@ -5,17 +5,17 @@ import (
 )
 
 // Objects implementing the AuthHandler interface can be registered to enforce
-// user Authentication via OAuth2, OpenID, or a custom authentication protocol.
+// user authentication via OAuth2, OpenID, or a custom authentication protocol.
 type AuthHandler interface {
 	// RedirectRequired returns a boolean value indicating if the request
-	// should be redirected to the Authentication provider's login screen.
+	// should be redirected to the authentication provider's login screen.
 	RedirectRequired(r *http.Request) bool
 
-	// Redirect will do an http.Redirect, sending the user to the Authentication
+	// Redirect will do an http.Redirect, sending the user to the authentication
 	// provider's login screen.
 	Redirect(w http.ResponseWriter, r *http.Request)
 
-	// GetAuthenticatedUser will retrieve the Authentication User from the
+	// GetAuthenticatedUser will retrieve the authenticated User from the
 	// http.Request object.
 	GetAuthenticatedUser(r *http.Request) (User, error)
 }
@@ -25,7 +25,7 @@ type AuthHandler interface {
 // registered patterns and calls the AuthHandler for the pattern that most
 // closely matches the URL.
 type AuthMux struct {
-	handlers map[string]AuthHandler
+	handlers  map[string]AuthHandler
 	OnSuccess AuthSuccess
 	OnFailure AuthFailure
 }
@@ -45,7 +45,7 @@ func NewAuthMux(s AuthSuccess, f AuthFailure) *AuthMux {
 // Handle registers the AuthHandler (oauth2, openid, etc) for the given URL
 // pattern. 
 func (self *AuthMux) Handle(pattern string, handler AuthHandler) {
-	self.handlers[pattern] = handler	
+	self.handlers[pattern] = handler
 }
 
 // ServeHTTP dispatches the request to the authentication handler whose pattern
@@ -64,7 +64,7 @@ func (self *AuthMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Get the Authenticated user Id
+		// Get the authenticated user Id
 		user, err := handler.GetAuthenticatedUser(r)
 		if err != nil {
 			// If there was a problem, invoke OnFailure

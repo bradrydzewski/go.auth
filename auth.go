@@ -8,9 +8,8 @@ import (
 	"time"
 )
 
-// AuthConfig holds configuration parameters used when
-// authenticating a user and creating a secure cookie
-// user session.
+// AuthConfig holds configuration parameters used when authenticating a user
+// and creating a secure cookie user session.
 type AuthConfig struct {
 	CookieSecret          []byte
 	CookieName            string
@@ -31,8 +30,7 @@ var Config = &AuthConfig{
 	LoginSuccessRedirect:  "/",
 }
 
-// Defines basic fields that should be
-// available for an authenticated User
+// Defines basic fields that should be available for an authenticated User.
 type User interface {
 	Userid() string
 	Username() string
@@ -44,11 +42,11 @@ type User interface {
 	Provider() string
 }
 
-////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // Secure Cookie Functions
 
-// Creates a secure cookie for the given username, indicating the
-// user is authenticated.
+// Creates a secure cookie for the given username, indicating the user is
+// authenticated.
 func SetUserCookie(w http.ResponseWriter, r *http.Request, user string) {
 
 	// cookie expires in 2 weeks
@@ -73,8 +71,8 @@ func SetUserCookie(w http.ResponseWriter, r *http.Request, user string) {
 	http.SetCookie(w, &cookie)
 }
 
-// Removes a secure cookie that was created for the user's login session.
-// This effectively logs a user out of the system.
+// Removes a secure cookie that was created for the user's login session. This
+// effectively logs a user out of the system.
 func DeleteUserCookie(w http.ResponseWriter, r *http.Request) {
 	cookie := http.Cookie{
 		Name:   Config.CookieName,
@@ -87,9 +85,8 @@ func DeleteUserCookie(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &cookie)
 }
 
-// GetUserCookie will get the Username from the
-// http session. If not active session, or if the session
-// has expired, then an error will be returned.
+// GetUserCookie will get the Username from the  http session. If not active
+// session, or if the session has expired, then an error will be returned.
 func GetUserCookie(r *http.Request) (user string, err error) {
 	//look for the authcookie
 	cookie, err := r.Cookie(Config.CookieName)
@@ -117,13 +114,12 @@ func GetUserCookie(r *http.Request) (user string, err error) {
 	return login, nil
 }
 
-////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // Wrapper funcs to Secure http.Handlers
 
-// Secure will attempt to verify a user session exists
-// prior to executing the http.Handler function. If no
-// valid sessions exists, the user will be redirected
-// to a login URL.
+// Secure will attempt to verify a user session exists prior to executing the
+// http.Handler function. If no valid sessions exists, the user will be
+// redirected to a login URL.
 func Secure(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, err := GetUserCookie(r)
@@ -140,14 +136,14 @@ func Secure(handler http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// SecureAuthHandler will verify a user session exists.
-// If no user sessioin exists, the user will be redirected
-// to a login url. If a user session exists, the username
-// will be attached to the request.
+// SecureAuthHandler will verify a user session exists. If no user sessioin
+// exists, the user will be redirected to a login url. If a user session exists,
+// the username will be attached to the request.
 //
-// This function is included primarily to simplify integration
-// with the routes.go library.
-// See https://github.com/bradrydzewski/routes.go
+// This function is included primarily to simplify integration with the
+// routes.go library.
+//
+// See https://github.com/bradrydzewski/routes
 func SecureAuthHandler(w http.ResponseWriter, r *http.Request) bool {
 	user, err := GetUserCookie(r)
 

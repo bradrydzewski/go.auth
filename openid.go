@@ -10,25 +10,24 @@ var (
 	ErrAuthDeclined = errors.New("Login was unsuccessful or cancelled by User")
 )
 
-var openIdParams = map[string]string {
-	"openid.ns" : "http://specs.openid.net/auth/2.0",
-	"openid.ns.ax" : "http://openid.net/srv/ax/1.0",
-	"openid.mode" : "checkid_setup",
-	"openid.ax.mode" : "fetch_request",
-	"openid.ax.required" : "firstname,lastname,username,language,email",
-	"openid.ax.type.username" : "http://axschema.org/namePerson/friendly",
-	"openid.ax.type.language" : "http://axschema.org/pref/language",
-	"openid.ax.type.fullname" : "http://axschema.org/namePerson",
-	"openid.ax.type.lastname" : "http://axschema.org/namePerson/last",
-	"openid.ax.type.firstname" : "http://axschema.org/namePerson/first",
-	"openid.ax.type.email" : "http://axschema.org/contact/email",
-	"openid.claimed_id" : "http://specs.openid.net/auth/2.0/identifier_select",
-	"openid.identity" : "http://specs.openid.net/auth/2.0/identifier_select",
+var openIdParams = map[string]string{
+	"openid.ns":                "http://specs.openid.net/auth/2.0",
+	"openid.ns.ax":             "http://openid.net/srv/ax/1.0",
+	"openid.mode":              "checkid_setup",
+	"openid.ax.mode":           "fetch_request",
+	"openid.ax.required":       "firstname,lastname,username,language,email",
+	"openid.ax.type.username":  "http://axschema.org/namePerson/friendly",
+	"openid.ax.type.language":  "http://axschema.org/pref/language",
+	"openid.ax.type.fullname":  "http://axschema.org/namePerson",
+	"openid.ax.type.lastname":  "http://axschema.org/namePerson/last",
+	"openid.ax.type.firstname": "http://axschema.org/namePerson/first",
+	"openid.ax.type.email":     "http://axschema.org/contact/email",
+	"openid.claimed_id":        "http://specs.openid.net/auth/2.0/identifier_select",
+	"openid.identity":          "http://specs.openid.net/auth/2.0/identifier_select",
 }
 
 // Abstract implementation of OpenID for user authentication.
 type OpenIdMixin struct {
-
 }
 
 func (self *OpenIdMixin) AuthorizeRedirect(w http.ResponseWriter,
@@ -47,8 +46,8 @@ func (self *OpenIdMixin) AuthorizeRedirect(w http.ResponseWriter,
 	// append the real and return_to parameters
 	// they will be defaulted to the current Host / Path
 	// TODO use ur.New().String() instead string joins below
-	params.Add("openid.realm", "http://" + r.Host)
-	params.Add("openid.return_to", "http://" + r.Host + r.URL.Path)
+	params.Add("openid.realm", "http://"+r.Host)
+	params.Add("openid.return_to", "http://"+r.Host+r.URL.Path)
 
 	// create the redirect url
 	redirectTo, _ := url.Parse(endpoint)
@@ -73,6 +72,6 @@ func (self *OpenIdMixin) GetAuthenticatedUser(params url.Values) (User, error) {
 
 	// Return the User data
 	// TODO for now we are re-using the Google User
-	user := GoogleUser{ Id : email, Email : email, Name : fullName }
+	user := GoogleUser{Id: email, Email: email, Name: fullName}
 	return &user, nil
 }

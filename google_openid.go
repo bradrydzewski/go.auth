@@ -31,4 +31,3 @@ func (self *GoogleOpenIdHandler) Redirect(w http.ResponseWriter, r *http.Request
 func (self *GoogleOpenIdHandler) GetAuthenticatedUser(r *http.Request) (User, error) {
 	return self.OpenIdMixin.GetAuthenticatedUser(r.URL.Query())
 }
-

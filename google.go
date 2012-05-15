@@ -145,35 +145,3 @@ type GoogleTokenResp struct {
 	ExpiresIn   int32  `json:"expires_in"`
 	TokenType   string `json:"token_type"`
 }
-
-
-
-
-/*
-
-DEAD CODE  ... REMOVE ME
-
-func (self *GoogleHandler) GetAuthenticatedUser(accessToken string) (User, error) {
-
-	header := make(http.Header)
-	header.Add("Authorization", "OAuth "+accessToken)
-
-	user := &GoogleUser{}
-	err := self.OAuth2Mixin.GetAuthenticatedUser(self.UserResourceUrl, accessToken, header, user)
-	return user, err
-}
-
-func (self *GoogleHandler) AuthorizeRedirect(w http.ResponseWriter, r *http.Request) {
-	params := make(url.Values)
-	params.Add("response_type", "code")
-	params.Add("scope", self.UserResourceScope)
-	params.Add("access_type", "offline")
-
-	self.OAuth2Mixin.AuthorizeRedirect(w, r, self.AuthorizeUrl, params)
-}
-*/
-
-
-
-
-
