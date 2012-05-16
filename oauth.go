@@ -15,6 +15,13 @@ type OAuth2Mixin struct {
 	RedirectUrl  string
 }
 
+// RedirectRequired returns a boolean value indicating if the request should
+// be redirected to the Provider's login screen, in order to provide an OAuth
+// Access Token.
+func (self *OAuth2Mixin) RedirectRequired(r *http.Request) bool {
+	return r.URL.Query().Get("code") == ""
+}
+
 func (self *OAuth2Mixin) GetAccessToken(endpoint string, params url.Values,
 	headers http.Header) (string, error) {
 

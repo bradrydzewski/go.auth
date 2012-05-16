@@ -48,10 +48,10 @@ func (u *GoogleUser) Provider() string {
 	return "google.com"
 }
 
-// GoogleHandler is an implementation of Google's Oauth2 
+// GoogleProvider is an implementation of Google's Oauth2 
 // for web application flow.
 // See https://developers.google.com/accounts/docs/OAuth2WebServer
-type GoogleHandler struct {
+type GoogleProvider struct {
 	OAuth2Mixin
 
 	AuthorizeUrl      string
@@ -60,28 +60,29 @@ type GoogleHandler struct {
 	UserResourceScope string
 }
 
-func NewGoogleHandler(clientId, clientSecret, redirectUrl string) *GoogleHandler {
-	goog := GoogleHandler{}
+// NewGoogleProvider allocates and returns a new GoogleProvider.
+func NewGoogleProvider(client, secret, redirect string) *GoogleProvider {
+	goog := GoogleProvider{}
 	goog.AuthorizeUrl = "https://accounts.google.com/o/oauth2/auth"
 	goog.AccessTokenUrl = "https://accounts.google.com/o/oauth2/token"
 	goog.UserResourceUrl = "https://www.googleapis.com/oauth2/v2/userinfo"
 	goog.UserResourceScope = "https://www.googleapis.com/auth/userinfo.profile+https://www.googleapis.com/auth/userinfo.email"
-	goog.ClientId = clientId
-	goog.ClientSecret = clientSecret
-	goog.RedirectUrl = redirectUrl
+	goog.ClientId = client
+	goog.ClientSecret = secret
+	goog.RedirectUrl = redirect
 	return &goog
 }
 
 // RedirectRequired returns a boolean value indicating if the request should
 // be redirected to the Google login screen, in order to provide an OAuth
 // Access Token.
-func (self *GoogleHandler) RedirectRequired(r *http.Request) bool {
+func (self *GoogleProvider) RedirectRequired(r *http.Request) bool {
 	return r.URL.Query().Get("code") == ""
 }
 
 // Redirect will do an http.Redirect, sending the user to the Google login
 // screen.
-func (self *GoogleHandler) Redirect(w http.ResponseWriter, r *http.Request) {
+func (self *GoogleProvider) Redirect(w http.ResponseWriter, r *http.Request) {
 	params := make(url.Values)
 	params.Add("response_type", "code")
 	params.Add("scope", self.UserResourceScope)
@@ -92,7 +93,7 @@ func (self *GoogleHandler) Redirect(w http.ResponseWriter, r *http.Request) {
 
 // GetAuthenticatedUser will retrieve the Authentication User from the
 // http.Request object.
-func (self *GoogleHandler) GetAuthenticatedUser(r *http.Request) (User, error) {
+func (self *GoogleProvider) GetAuthenticatedUser(r *http.Request) (User, error) {
 	// Get the OAuth2 Access Token
 	token, err := self.GetAccessToken(r)
 	if err != nil {
@@ -109,7 +110,7 @@ func (self *GoogleHandler) GetAuthenticatedUser(r *http.Request) (User, error) {
 }
 
 // GetAccessToken will retrieve the Access Token from the http.Request URL.
-func (self *GoogleHandler) GetAccessToken(r *http.Request) (string, error) {
+func (self *GoogleProvider) GetAccessToken(r *http.Request) (string, error) {
 
 	code := r.URL.Query().Get("code")
 	if code == "" {

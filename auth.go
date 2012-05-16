@@ -1,15 +1,109 @@
 package auth
 
 import (
-	"errors"
-	"github.com/dchest/authcookie"
 	"net/http"
 	"net/url"
 	"time"
 )
 
-// AuthConfig holds configuration parameters used when authenticating a user
-// and creating a secure cookie user session.
+// AuthHandler is an HTTP Handler that authenticates an http.Request using
+// the specified AuthProvider.
+type AuthHandler struct {
+	// provider specifies the policy for authenticating a user.
+	provider AuthProvider
+
+	// Success specifies a function to execute upon successful authentication.
+	// If Success is nil, the DefaultSuccess func is used.
+	Success func(w http.ResponseWriter, r *http.Request, user User)
+
+	// Failure specifies a function to execute upon failing authentication.
+	// If Failure is nil, the DefaultFailure func is used.
+	Failure func(w http.ResponseWriter, r *http.Request, err error)
+}
+
+// New allocates and returns a new AuthHandler, using the specified
+// AuthProvider.
+func New(p AuthProvider) *AuthHandler {
+	return &AuthHandler{ provider : p }
+}
+
+// Google allocates and returns a new AuthHandler, using the GoogleProvider.
+func Google(client, secret, redirect string) *AuthHandler {
+	return New(NewGoogleProvider(client, secret, redirect))
+}
+
+// Github allocates and returns a new AuthHandler, using the GithubProvider.
+func Github(client, secret string) *AuthHandler {
+	return New(NewGithubProvider(client, secret))
+}
+
+// OpenId allocates and returns a new AuthHandler, using the OpenIdProvider.
+func OpenId(url string) *AuthHandler {
+	return New(NewOpenIdProvider(url))
+}
+
+// ServeHTTP handles the authentication request and manages the
+// authentication flow.
+func (self *AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Redirect the user, if required
+	if self.provider.RedirectRequired(r) == true {
+		self.provider.Redirect(w, r)
+		return
+	}
+
+	// Get the authenticated user Id
+	user, err := self.provider.GetAuthenticatedUser(r)
+	if err != nil {
+		// If there was a problem, invoke failure
+		if self.Failure == nil {
+			defaultFailure(w, r, err)
+		} else {
+			self.Failure(w, r, err)
+		}
+		return
+	}
+
+	// Invoke the success function
+	if self.Success == nil {
+		defaultSuccess(w, r, user)
+	} else {
+		self.Success(w, r, user)
+	}
+}
+
+// defaultSuccess will redirect a User, using an http.Redirect, to the
+// Config.LoginSuccessRedirect url upon successful authentication.
+func defaultSuccess(w http.ResponseWriter, r *http.Request, u User) {
+	SetUserCookie(w, r, u.Username())
+	http.Redirect(w, r, Config.LoginSuccessRedirect, http.StatusSeeOther)
+}
+
+// defaultFailure will return an http Forbidden code indicating a failed
+// authentication.
+func defaultFailure(w http.ResponseWriter, r *http.Request, err error) {
+	http.Error(w, err.Error(), http.StatusForbidden)
+}
+
+// An AuthProvider interface is used by an AuthHandler to authenticate a user
+// over HTTP. Example implementations of an AuthProvider might be OAuth, OpenId,
+// or SAML.
+type AuthProvider interface {
+
+	// RedirectRequired returns a boolean value indicating if the request
+	// should be redirected to the authentication provider's login screen.
+	RedirectRequired(r *http.Request) bool
+
+	// Redirect will do an http.Redirect, sending the user to the authentication
+	// provider's login screen.
+	Redirect(w http.ResponseWriter, r *http.Request)
+
+	// GetAuthenticatedUser will retrieve the authenticated User from the
+	// http.Request object.
+	GetAuthenticatedUser(r *http.Request) (User, error)
+}
+
+// AuthConfig holds configuration parameters used when authenticating a user and
+// creating a secure cookie user session.
 type AuthConfig struct {
 	CookieSecret          []byte
 	CookieName            string
@@ -17,20 +111,19 @@ type AuthConfig struct {
 	CookieMaxAge          int
 	LoginRedirect         string
 	LoginSuccessRedirect  string
-	LogoutSuccessRedirect string
 }
 
-// Default configurations, can be set by the user
+// Config is the default implementation of Config, and is used by
+// DetaultAuthCallback, Secure, and SecureFunc.
 var Config = &AuthConfig{
 	CookieName:            "UID",
 	CookieExp:             time.Hour * 24 * 14,
 	CookieMaxAge:          0,
 	LoginRedirect:         "/auth/login",
-	LogoutSuccessRedirect: "/auth/login",
 	LoginSuccessRedirect:  "/",
 }
 
-// Defines basic fields that should be available for an authenticated User.
+// A User is returned by the AuthProvider upon success authentication.
 type User interface {
 	Userid() string
 	Username() string
@@ -42,85 +135,10 @@ type User interface {
 	Provider() string
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Secure Cookie Functions
-
-// Creates a secure cookie for the given username, indicating the user is
-// authenticated.
-func SetUserCookie(w http.ResponseWriter, r *http.Request, user string) {
-
-	// cookie expires in 2 weeks
-	exp := time.Now().Add(Config.CookieExp)
-
-	// generate cookie valid for 24 hours for user
-	value := authcookie.New(user, exp, Config.CookieSecret)
-
-	cookie := http.Cookie{
-		Name:   Config.CookieName,
-		Value:  value,
-		Path:   "/",
-		Domain: r.URL.Host,
-	}
-
-	// if not a session cookie
-	if Config.CookieMaxAge > 0 {
-		cookie.Expires = exp
-		cookie.MaxAge = Config.CookieMaxAge
-	}
-
-	http.SetCookie(w, &cookie)
-}
-
-// Removes a secure cookie that was created for the user's login session. This
-// effectively logs a user out of the system.
-func DeleteUserCookie(w http.ResponseWriter, r *http.Request) {
-	cookie := http.Cookie{
-		Name:   Config.CookieName,
-		Value:  "deleted",
-		Path:   "/",
-		Domain: r.URL.Host,
-		MaxAge: -1,
-	}
-
-	http.SetCookie(w, &cookie)
-}
-
-// GetUserCookie will get the Username from the  http session. If not active
-// session, or if the session has expired, then an error will be returned.
-func GetUserCookie(r *http.Request) (user string, err error) {
-	//look for the authcookie
-	cookie, err := r.Cookie(Config.CookieName)
-
-	//if doesn't exist (or is malformed) redirect
-	//back to the login url
-	if err != nil {
-		return "", err
-	}
-
-	login, expires, err := authcookie.Parse(cookie.Value, Config.CookieSecret)
-
-	//if there was an error parsing the cookie, redirect
-	//back to the login url
-	if err != nil {
-		return "", err
-	}
-
-	//if the cookie is expired, redirect back to the
-	//login url
-	if time.Now().After(expires) {
-		return "", errors.New("User session Expired")
-	}
-
-	return login, nil
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Wrapper funcs to Secure http.Handlers
-
-// Secure will attempt to verify a user session exists prior to executing the
-// http.Handler function. If no valid sessions exists, the user will be
-// redirected to a login URL.
-func Secure(handler http.HandlerFunc) http.HandlerFunc {
+// SecureFunc will attempt to verify a user session exists prior to executing
+// the http.HandlerFunc. If no valid sessions exists, the user will be
+// redirected to the Config.LoginRedirect Url.
+func SecureFunc(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, err := GetUserCookie(r)
 
@@ -136,24 +154,30 @@ func Secure(handler http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// SecureAuthHandler will verify a user session exists. If no user sessioin
-// exists, the user will be redirected to a login url. If a user session exists,
-// the username will be attached to the request.
-//
-// This function is included primarily to simplify integration with the
-// routes.go library.
-//
-// See https://github.com/bradrydzewski/routes
-func SecureAuthHandler(w http.ResponseWriter, r *http.Request) bool {
+// Secure will attempt to verify a user session exists prior to executing
+// the http.Handler ServeHTTP function. If no valid sessions exists, the user
+// will be redirected to the Config.LoginRedirect Url.
+func Secure(handler http.Handler) http.Handler {
+	return &secureHandler{ handler }
+}
+
+// secureHandler wraps an http.Handler and ServeHTTP function in order
+// to authenticate the incoming request.
+type secureHandler struct {
+	handler http.Handler
+}
+
+func (self *secureHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, err := GetUserCookie(r)
 
 	//if no active user session then authorize user
 	if user == "" || err != nil {
 		http.Redirect(w, r, Config.LoginRedirect, http.StatusSeeOther)
-		return false
+		return
 	}
 
 	//else, add the user to the URL and continue
 	r.URL.User = url.User(user)
-	return true
+	self.handler.ServeHTTP(w, r)
 }
+

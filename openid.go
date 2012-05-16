@@ -6,6 +6,10 @@ import (
 	"net/url"
 )
 
+const (
+	GoogleOpenIdEndpoint = "https://accounts.google.com/o/openid2/auth"
+)
+
 var (
 	ErrAuthDeclined = errors.New("Login was unsuccessful or cancelled by User")
 )
@@ -26,17 +30,25 @@ var openIdParams = map[string]string{
 	"openid.identity":          "http://specs.openid.net/auth/2.0/identifier_select",
 }
 
-// Abstract implementation of OpenID for user authentication.
-type OpenIdMixin struct {
+// Base implementation of OpenID for user authentication.
+type OpenIdProvider struct {
+	endpoint string
 }
 
-func (self *OpenIdMixin) AuthorizeRedirect(w http.ResponseWriter,
-	r *http.Request, endpoint string, params url.Values) {
+// NewOpenIdProvider allocates and returns a new OpenIdProvider.
+func NewOpenIdProvider(endpoint string) *OpenIdProvider {
+	return &OpenIdProvider{ endpoint }
+}
 
-	// if no default params provided ...
-	if params == nil {
-		params = make(url.Values)
-	}
+func (self *OpenIdProvider) RedirectRequired(r *http.Request) bool {
+	return r.URL.Query().Get("openid.mode") == ""
+}
+
+// Redirect will send the user to the OpenId Authentication URL
+func (self *OpenIdProvider) Redirect(w http.ResponseWriter, r *http.Request) {
+
+	// create the url params
+	var params = make(url.Values)
 
 	// construct the Redirect URL with default OpenId params
 	for key, val := range openIdParams {
@@ -45,19 +57,25 @@ func (self *OpenIdMixin) AuthorizeRedirect(w http.ResponseWriter,
 
 	// append the real and return_to parameters
 	// they will be defaulted to the current Host / Path
-	// TODO use ur.New().String() instead string joins below
+	// TODO use url.New().String() instead string joins below
 	params.Add("openid.realm", "http://"+r.Host)
 	params.Add("openid.return_to", "http://"+r.Host+r.URL.Path)
 
 	// create the redirect url
-	redirectTo, _ := url.Parse(endpoint)
+	redirectTo, _ := url.Parse(self.endpoint)
 	redirectTo.RawQuery = params.Encode()
 
 	// redirect to login
 	http.Redirect(w, r, redirectTo.String(), http.StatusSeeOther)
 }
 
-func (self *OpenIdMixin) GetAuthenticatedUser(params url.Values) (User, error) {
+// GetAuthenticatedUser will retrieve the User information from the URL
+// query parameters, per the OpenID specification. If the authentication failed,
+// the function will return an error.
+func (self *OpenIdProvider) GetAuthenticatedUser(r *http.Request) (User, error) {
+
+	// Parse the url parameters
+	params := r.URL.Query()
 
 	// Check to see if the user successfully authenticated
 	if params.Get("openid.mode") == "cancel" {

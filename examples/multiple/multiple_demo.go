@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"flag"
     "net/http"
-	"github.com/bradrydzewski/auth.go"
+	"github.com/bradrydzewski/go.auth"
 )
 
 var homepage = `
@@ -13,7 +13,7 @@ var homepage = `
 		<title>Login</title>
 	</head>
 	<body>
-		<div>Welcome to the auth.go Google demo</div>
+		<div>Welcome to the go.Auth Multi-Provider demo</div>
 		<div><a href="/auth/login">Login</a><div>
 	</body>
 </html>
@@ -74,76 +74,27 @@ func main() {
 
 	// set the auth parameters
 	auth.Config.CookieSecret = []byte("7H9xiimk2QdTdYI7rDddfJeV")
+	auth.Config.LoginSuccessRedirect = "/private"
 
-	// get your google auth manager
-	google := auth.NewGoogleHandler(*googleAccessKey, *googleSecretKey, googleRedirect)
-	github := auth.NewGitHubHandler(*githubAccessKey, *githubSecretKey)
+	// create the login handlers
+	google := auth.Google(*googleAccessKey, *googleSecretKey, googleRedirect)
+	github := auth.Github(*githubAccessKey, *githubSecretKey)
+	http.Handle("/auth/login/google", google)
+	http.Handle("/auth/login/github", github)
+
+	// login screen to choose auth provider
+	http.HandleFunc("/auth/login", MultiLogin)
 
 	// public urls
 	http.HandleFunc("/", Public)
 
 	// private, secured urls
-	http.HandleFunc("/private", auth.Secure(Private))
+	http.HandleFunc("/private", auth.SecureFunc(Private))
 
 	// logout handler
     http.HandleFunc("/auth/logout", func (w http.ResponseWriter, r *http.Request) {
 		auth.DeleteUserCookie(w, r)
 		http.Redirect(w, r, "/", http.StatusSeeOther)
-	})
-
-	// login screen to choose auth provider
-	http.HandleFunc("/auth/login", MultiLogin)
-	
-	// google login handler
-    http.HandleFunc("/auth/login/google", func (w http.ResponseWriter, r *http.Request) {
-		// attempt to get the access token
-		token, err := google.GetAccessToken(r)
-		if err != nil {
-			//if user not authorized, redirect
-			google.AuthorizeRedirect(w, r)
-			return
-		}
-
-		// get the authorized user
-		user, err := google.GetAuthenticatedUser(token)
-
-		if err != nil {
-			//if we can't get the user data, display an error message
-			http.Error(w, "", http.StatusForbidden)
-			return
-		}
-
-		// else, set the secure user cookie
-		auth.SetUserCookie(w, r, user.Username())
-
-		// redirect the user now that they are logged in
-		http.Redirect(w, r, "/private", http.StatusSeeOther)
-	})
-
-	// github login handler
-    http.HandleFunc("/auth/login/github", func (w http.ResponseWriter, r *http.Request) {
-		// attempt to get the access token
-		token, err := github.GetAccessToken(r)
-		if err != nil {
-			//if user not authorized, redirect
-			github.AuthorizeRedirect(w, r)
-			return
-		}
-
-		// get the authorized user
-		user, err := github.GetAuthenticatedUser(token)
-
-		if err != nil {
-			//if we can't get the user data, display an error message
-			http.Error(w, "", http.StatusForbidden)
-			return
-		}
-
-		// else, set the secure user cookie
-		auth.SetUserCookie(w, r, user.Username())
-
-		// redirect the user now that they are logged in
-		http.Redirect(w, r, "/private", http.StatusSeeOther)
 	})
 
 	println("google demo starting on port 8080")
@@ -152,18 +103,3 @@ func main() {
 		fmt.Println(err)
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

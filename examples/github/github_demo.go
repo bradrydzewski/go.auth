@@ -13,7 +13,7 @@ var homepage = `
 		<title>Login</title>
 	</head>
 	<body>
-		<div>Welcome to the auth.go Github demo</div>
+		<div>Welcome to the go.auth Github demo</div>
 		<div><a href="/auth/login">Authenticate with your Github Id</a><div>
 	</body>
 </html>
@@ -42,17 +42,6 @@ func Public(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, homepage)
 }
 
-// login success callback
-func LoginSuccess(w http.ResponseWriter, r *http.Request, u auth.User) {
-	auth.SetUserCookie(w, r, u.Username())
-	http.Redirect(w, r, "/private", http.StatusSeeOther)
-}
-
-// login failure callback
-func LoginFailure(w http.ResponseWriter, r *http.Request, err error) {
-	http.Error(w, err.Error(), http.StatusForbidden)
-}
-
 // logout handler
 func Logout(w http.ResponseWriter, r *http.Request) {
 	auth.DeleteUserCookie(w, r)
@@ -69,23 +58,20 @@ func main() {
 
 	// set the auth parameters
 	auth.Config.CookieSecret = []byte("7H9xiimk2QdTdYI7rDddfJeV")
+	auth.Config.LoginSuccessRedirect = "/private"
 
-	// create the auth multiplexer
-	githubHandler := auth.NewGitHubHandler(*githubClientKey, *githubSecretKey)
-	auth.Handle("/auth/login", githubHandler)
+	// login handler
+	githubHandler := auth.Github(*githubClientKey, *githubSecretKey)
+	http.Handle("/auth/login", githubHandler)
+
+	// logout handler
+    http.HandleFunc("/auth/logout", Logout)
 
 	// public urls
 	http.HandleFunc("/", Public)
 
 	// private, secured urls
 	http.HandleFunc("/private", auth.SecureFunc(Private))
-
-	// logout handler
-    http.HandleFunc("/auth/logout", Logout)
-
-	// login handler
-	http.Handle("/auth/login", auth.DefaultAuthMux)
-
 
 	println("github demo starting on port 8080")
 	err := http.ListenAndServe(":8080", nil)

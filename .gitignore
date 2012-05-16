@@ -43,8 +43,11 @@ Thumbs.db
 /examples/github/github
 /examples/google/google
 /examples/openid/openid
+/examples/multiple/multiple
 
 
 # Other #
 #########
-run.sh
+/examples/github/github.sh
+/examples/google/google.sh
+/examples/multiple/multiple.sh

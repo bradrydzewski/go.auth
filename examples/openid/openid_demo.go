@@ -41,17 +41,6 @@ func Public(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, homepage)
 }
 
-// login success callback
-func LoginSuccess(w http.ResponseWriter, r *http.Request, u auth.User) {
-	auth.SetUserCookie(w, r, u.Username())
-	http.Redirect(w, r, "/private", http.StatusSeeOther)
-}
-
-// login failure callback
-func LoginFailure(w http.ResponseWriter, r *http.Request, err error) {
-	http.Error(w, err.Error(), http.StatusForbidden)
-}
-
 // logout handler
 func Logout(w http.ResponseWriter, r *http.Request) {
 	auth.DeleteUserCookie(w, r)
@@ -62,10 +51,11 @@ func main() {
 
 	// set the auth parameters
 	auth.Config.CookieSecret = []byte("7H9xiimk2QdTdYI7rDddfJeV")
+	auth.Config.LoginSuccessRedirect = "/private"
 
-	// create the auth multiplexer
-	googleHandler := auth.NewGoogleOpenIdHandler()
-	auth.Handle("/auth/login", googleHandler)
+	// create the login handler
+	endpoint := "https://accounts.google.com/o/openid2/auth"
+	http.Handle("/auth/login", auth.OpenId(endpoint))
 
 	// public urls
 	http.HandleFunc("/", Public)
@@ -75,9 +65,6 @@ func main() {
 
 	// logout handler
 	http.HandleFunc("/auth/logout", Logout)
-
-	// login handler
-	http.Handle("/auth/login", auth.DefaultAuthMux)
 
 	println("openid demo starting on port 8080")
 	err := http.ListenAndServe(":8080", nil)
