@@ -9,14 +9,14 @@ Python's Tornado framework, specifically their auth module, was the main inspira
 ## Providers
 The following auth providers are supported:
 
-* Github OAuth2 [demo](https://github.com/bradrydzewski/go.auth/tree/master/examples/github)
-* Google OAuth2 [demo](https://github.com/bradrydzewski/go.auth/tree/master/examples/google)
-* Google OpenId [demo](https://github.com/bradrydzewski/go.auth/tree/master/examples/openid)
+* Github OAuth 2.0 [demo](https://github.com/bradrydzewski/go.auth/tree/master/examples/github)
+* Google OAuth 2.0 [demo](https://github.com/bradrydzewski/go.auth/tree/master/examples/google)
+* Google OpenId 2.0 [demo](https://github.com/bradrydzewski/go.auth/tree/master/examples/openid)
+* Twitter OAuth 1.0a [demo](https://github.com/bradrydzewski/go.auth/tree/master/examples/twitter)
 
 We plan to add support for the following providers:
 
 * Facebook
-* Twitter
 * LinkedIn
 
 # Sample Code
@@ -24,14 +24,11 @@ Example program using the Google OpenId auth provider:
 
 ```go
 // Set the default authentication configuration parameters
-auth.DefaultConfig.CookieSecret         = []byte("asdfasdfasfasdfasdfafsd")
-auth.DefaultConfig.LoginRedirect        = "/auth/login"
-auth.DefaultConfig.LoginSuccessRedirect = "/private"
+auth.Config.CookieSecret         = []byte("asdfasdfasfasdfasdfafsd")
+auth.Config.LoginSuccessRedirect = "/private"
 
-// Create your authentication handlers (Github and Google)
+// Create your login handler
 githubHandler := auth.NewGithubHandler(githubAccessKey, githubSecretKey)
-
-// Register the authentication handlers with the DefaultServeMux
 http.Handle("/auth/login", githubHandler)
 
 // Example of a public http handler
@@ -62,27 +59,27 @@ func Foo(w http.ResponseWriter, r *http.Request) {
  <th>Default Value</th>
 </tr>
 <tr>
- <td>auth.DefaultConfig.CookieName</td>
+ <td>auth.Config.CookieName</td>
  <td>name of the secure cookie</td>
  <td>"UID"</td>
 </tr>
 <tr>
- <td>auth.DefaultConfig.CookieSecret</td>
+ <td>auth.Config.CookieSecret</td>
  <td>key used to encrypt the cookie value</td>
  <td>nil</td>
 </tr>
 <tr>
- <td>auth.DefaultConfig.CookieExp</td>
+ <td>auth.Config.CookieExp</td>
  <td>amount of time before cookie expires</td>
  <td>time.Hour * 24 * 14</td>
 </tr>
 <tr>
- <td>auth.DefaultConfig.LoginRedirect</td>
+ <td>auth.Config.LoginRedirect</td>
  <td>where to re-direct a user that is not authenticated</td>
  <td>"/auth/login"</td>
 </tr>
 <tr>
- <td>auth.DefaultConfig.LoginSuccessRedirect</td>
+ <td>auth.Config.LoginSuccessRedirect</td>
  <td>where to re-direct a user once authenticated</td>
  <td>"/"</td>
 </tr>

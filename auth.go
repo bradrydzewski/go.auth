@@ -42,6 +42,11 @@ func OpenId(url string) *AuthHandler {
 	return New(NewOpenIdProvider(url))
 }
 
+// Twitter allocates and returns a new AuthHandler, using the TwitterProvider.
+func Twitter(key, secret, callback string) *AuthHandler {
+	return New(NewGoogleProvider(key, secret, callback))
+}
+
 // ServeHTTP handles the authentication request and manages the
 // authentication flow.
 func (self *AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -56,7 +61,7 @@ func (self *AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// If there was a problem, invoke failure
 		if self.Failure == nil {
-			defaultFailure(w, r, err)
+			DefaultFailure(w, r, err)
 		} else {
 			self.Failure(w, r, err)
 		}
@@ -65,22 +70,22 @@ func (self *AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Invoke the success function
 	if self.Success == nil {
-		defaultSuccess(w, r, user)
+		DefaultSuccess(w, r, user)
 	} else {
 		self.Success(w, r, user)
 	}
 }
 
-// defaultSuccess will redirect a User, using an http.Redirect, to the
+// DefaultSuccess will redirect a User, using an http.Redirect, to the
 // Config.LoginSuccessRedirect url upon successful authentication.
-func defaultSuccess(w http.ResponseWriter, r *http.Request, u User) {
+var DefaultSuccess = func(w http.ResponseWriter, r *http.Request, u User) {
 	SetUserCookie(w, r, u.Username())
 	http.Redirect(w, r, Config.LoginSuccessRedirect, http.StatusSeeOther)
 }
 
-// defaultFailure will return an http Forbidden code indicating a failed
+// DefaultFailure will return an http Forbidden code indicating a failed
 // authentication.
-func defaultFailure(w http.ResponseWriter, r *http.Request, err error) {
+var DefaultFailure = func(w http.ResponseWriter, r *http.Request, err error) {
 	http.Error(w, err.Error(), http.StatusForbidden)
 }
 

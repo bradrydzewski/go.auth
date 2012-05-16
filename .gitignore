@@ -44,10 +44,11 @@ Thumbs.db
 /examples/google/google
 /examples/openid/openid
 /examples/multiple/multiple
-
+/examples/twitter/twitter
 
 # Other #
 #########
 /examples/github/github.sh
 /examples/google/google.sh
 /examples/multiple/multiple.sh
+/examples/twitter/twitter.sh
