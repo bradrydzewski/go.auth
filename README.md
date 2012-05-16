@@ -25,6 +25,7 @@ Example program using the Google OpenId auth provider:
 ```go
 // Set the default authentication configuration parameters
 auth.Config.CookieSecret         = []byte("asdfasdfasfasdfasdfafsd")
+auth.Config.LoginRedirect        = "/auth/login"
 auth.Config.LoginSuccessRedirect = "/private"
 
 // Create your login handler

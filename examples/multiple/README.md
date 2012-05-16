@@ -14,8 +14,8 @@ You should login to the Google API console and register the second URL. You will
 In order to start the application you will need to pass in the Client Id and Secret Key as args for both Google and Github:
 
 ```sh
-./6.out -goo_access_token 121a40934a69c7cca3b3 -goo_secret_key asdfasdf234wfsf387s8f79asdfc41f49814k9asdasd \
-        -git_access_token a69c7cca3b3121a40934 -git_secret_key 9fd798we87s8f79904abaa91ac1ac41f49814k9asdfs
+./multiple -goo_access_token 121a40934a69c7cca3b3 -goo_secret_key asdfasdf234wfsf387s8f79asdfc41f49814k9asdasd \
+           -git_access_token a69c7cca3b3121a40934 -git_secret_key 9fd798we87s8f79904abaa91ac1ac41f49814k9asdfs
 ```
 
 You can then visit your application at `http://localhost:8080/`
