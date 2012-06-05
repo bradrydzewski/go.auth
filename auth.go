@@ -44,7 +44,7 @@ func OpenId(url string) *AuthHandler {
 
 // Twitter allocates and returns a new AuthHandler, using the TwitterProvider.
 func Twitter(key, secret, callback string) *AuthHandler {
-	return New(NewGoogleProvider(key, secret, callback))
+	return New(NewTwitterProvider(key, secret, callback))
 }
 
 // ServeHTTP handles the authentication request and manages the

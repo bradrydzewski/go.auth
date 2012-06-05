@@ -14,6 +14,8 @@ The following auth providers are supported:
 * Google OpenId 2.0 [demo](https://github.com/bradrydzewski/go.auth/tree/master/examples/openid)
 * Twitter OAuth 1.0a [demo](https://github.com/bradrydzewski/go.auth/tree/master/examples/twitter)
 
+See the [multi-provider](https://github.com/bradrydzewski/go.auth/tree/master/examples/multiple) demo application to provide your users multiple login options.
+
 We plan to add support for the following providers:
 
 * Facebook
@@ -25,11 +27,11 @@ Example program using the Google OpenId auth provider:
 ```go
 // Set the default authentication configuration parameters
 auth.Config.CookieSecret         = []byte("asdfasdfasfasdfasdfafsd")
-auth.Config.LoginRedirect        = "/auth/login"
-auth.Config.LoginSuccessRedirect = "/private"
+auth.Config.LoginRedirect        = "/auth/login" // send user here to login
+auth.Config.LoginSuccessRedirect = "/private"    // send user here post-login
 
 // Create your login handler
-githubHandler := auth.NewGithubHandler(githubAccessKey, githubSecretKey)
+githubHandler := auth.Github(githubAccessKey, githubSecretKey)
 http.Handle("/auth/login", githubHandler)
 
 // Example of a public http handler
@@ -38,8 +40,6 @@ http.HandleFunc("/public", Public)
 // Example of a secured http handler
 http.HandleFunc("/private", auth.SecureFunc(Private))
 ```
-
-You can even mix and match. See the [multi-provider](https://github.com/bradrydzewski/go.auth/tree/master/examples/multiple) demo application.
 
 ## User data
 The user data is passed to your Handler via the URL's `User` field:
