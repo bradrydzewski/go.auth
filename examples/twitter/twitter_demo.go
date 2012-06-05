@@ -52,8 +52,8 @@ func main() {
 
 	// You should pass in your client key and secret key as args.
 	// Or you can set your access key and secret key by replacing the default values below (2nd input param in flag.String)
-	twitterKey := flag.String("key", "[your github client key]", "your oauth client key")
-	twitterSecret := flag.String("secret", "[your github secret key]", "your oauth secret key")
+	twitterKey := flag.String("key", "[your twitter client key]", "your oauth client key")
+	twitterSecret := flag.String("secret", "[your twitter secret key]", "your oauth secret key")
 	flag.Parse()
 
 	// set the auth parameters
