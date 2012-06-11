@@ -4,18 +4,19 @@ import (
 	"errors"
 	"github.com/dchest/authcookie"
 	"net/http"
+	"strings"
 	"time"
 )
 
 // SetUserCookie creates a secure cookie for the given username, indicating the
 // user is authenticated.
-func SetUserCookie(w http.ResponseWriter, r *http.Request, user string) {
+func SetUserCookie(w http.ResponseWriter, r *http.Request, provider, user string) {
 
 	// cookie expires in 2 weeks
 	exp := time.Now().Add(Config.CookieExp)
 
 	// generate cookie valid for 24 hours for user
-	value := authcookie.New(user, exp, Config.CookieSecret)
+	value := authcookie.New(provider + "|" + user, exp, Config.CookieSecret)
 
 	cookie := http.Cookie{
 		Name:   Config.CookieName,
@@ -49,14 +50,14 @@ func DeleteUserCookie(w http.ResponseWriter, r *http.Request) {
 
 // GetUserCookie will get the Username from the http session. If the session is
 // inactive, or if the session has expired, then an error will be returned.
-func GetUserCookie(r *http.Request) (user string, err error) {
+func GetUserCookie(r *http.Request) (provider, user string, err error) {
 	//look for the authcookie
 	cookie, err := r.Cookie(Config.CookieName)
 
 	//if doesn't exist (or is malformed) redirect
 	//back to the login url
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	login, expires, err := authcookie.Parse(cookie.Value, Config.CookieSecret)
@@ -64,14 +65,16 @@ func GetUserCookie(r *http.Request) (user string, err error) {
 	//if there was an error parsing the cookie, redirect
 	//back to the login url
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	//if the cookie is expired, redirect back to the
 	//login url
 	if time.Now().After(expires) {
-		return "", errors.New("User session Expired")
+		return "", "", errors.New("User session Expired")
 	}
 
-	return login, nil
+	// split the user from the provider
+	s := strings.Split(login, "|")
+	return s[0], s[1], nil
 }

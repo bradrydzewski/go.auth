@@ -79,7 +79,7 @@ func (self *AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // DefaultSuccess will redirect a User, using an http.Redirect, to the
 // Config.LoginSuccessRedirect url upon successful authentication.
 var DefaultSuccess = func(w http.ResponseWriter, r *http.Request, u User) {
-	SetUserCookie(w, r, u.Username())
+	SetUserCookie(w, r, u.Provider(), u.Username())
 	http.Redirect(w, r, Config.LoginSuccessRedirect, http.StatusSeeOther)
 }
 
@@ -145,7 +145,7 @@ type User interface {
 // redirected to the Config.LoginRedirect Url.
 func SecureFunc(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user, err := GetUserCookie(r)
+		_, user, err := GetUserCookie(r)
 
 		//if no active user session then authorize user
 		if user == "" || err != nil {
@@ -158,31 +158,3 @@ func SecureFunc(handler http.HandlerFunc) http.HandlerFunc {
 		handler(w, r)
 	}
 }
-
-// Secure will attempt to verify a user session exists prior to executing
-// the http.Handler ServeHTTP function. If no valid sessions exists, the user
-// will be redirected to the Config.LoginRedirect Url.
-func Secure(handler http.Handler) http.Handler {
-	return &secureHandler{ handler }
-}
-
-// secureHandler wraps an http.Handler and ServeHTTP function in order
-// to authenticate the incoming request.
-type secureHandler struct {
-	handler http.Handler
-}
-
-func (self *secureHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	user, err := GetUserCookie(r)
-
-	//if no active user session then authorize user
-	if user == "" || err != nil {
-		http.Redirect(w, r, Config.LoginRedirect, http.StatusSeeOther)
-		return
-	}
-
-	//else, add the user to the URL and continue
-	r.URL.User = url.User(user)
-	self.handler.ServeHTTP(w, r)
-}
-
