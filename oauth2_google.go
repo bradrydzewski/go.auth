@@ -9,43 +9,35 @@ import (
 
 // GoogleUser represents a Google user object returned by the OAuth2 service.
 type GoogleUser struct {
-	Id      string `json:"id"`
-	Email   string `json:"email"`
-	Picture string `json:"picture"`
-	Name    string `json:"name"`
-	Link    string `json:"link"`
+	UserId      string `json:"id"`
+	UserEmail   string `json:"email"`
+	UserPicture string `json:"picture"`
+	UserName    string `json:"name"`
+	UserLink    string `json:"link"`
 }
 
-func (u *GoogleUser) Userid() string {
-	return u.Id
-}
-
-func (u *GoogleUser) Username() string {
-	return u.Email
-}
-
-func (u *GoogleUser) Password() string {
-	return ""
-}
-
-func (u *GoogleUser) EmailAddr() string {
-	return u.Email
-}
-
-func (u *GoogleUser) Fullname() string {
-	return u.Name
-}
-
-func (u *GoogleUser) Icon() string {
-	return u.Picture
-}
-
-func (u *GoogleUser) Url() string {
-	return u.Link
+func (u *GoogleUser) Id() string {
+	return u.UserId
 }
 
 func (u *GoogleUser) Provider() string {
 	return "google.com"
+}
+
+func (u *GoogleUser) Name() string {
+	return u.UserName
+}
+
+func (u *GoogleUser) Email() string {
+	return u.UserEmail
+}
+
+func (u *GoogleUser) Picture() string {
+	return u.UserPicture
+}
+
+func (u *GoogleUser) Link() string {
+	return u.UserLink
 }
 
 // GoogleProvider is an implementation of Google's Oauth2 

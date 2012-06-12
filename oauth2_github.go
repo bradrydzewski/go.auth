@@ -1,52 +1,44 @@
 package auth
 
 import (
+"fmt"
 	"errors"
 	"net/http"
 	"net/url"
-	"strconv"
 )
 
 // GitHubUser represents a GitHub user object returned by the OAuth2 service.
 type GitHubUser struct {
-	Id     int64  `json:"id"`
-	Email  string `json:"email"`
-	Avatar string `json:"avatar_url"`
-	Name   string `json:"name"`
-	Login  string `json:"login"`
-	Link   string `json:"url"`
+	UserId      string `json:"id"`
+	UserEmail   string `json:"email"`
+	UserAvatar  string `json:"avatar_url"`
+	UserName    string `json:"name"`
+	UserLogin   string `json:"login"`
+	UserLink    string `json:"html_url"`
 }
 
-func (u *GitHubUser) Userid() string {
-	return strconv.FormatInt(int64(u.Id), 10)
-}
-
-func (u *GitHubUser) Username() string {
-	return u.Login
-}
-
-func (u *GitHubUser) Password() string {
-	return ""
-}
-
-func (u *GitHubUser) EmailAddr() string {
-	return u.Email
-}
-
-func (u *GitHubUser) Fullname() string {
-	return u.Name
-}
-
-func (u *GitHubUser) Icon() string {
-	return u.Avatar
-}
-
-func (u *GitHubUser) Url() string {
-	return u.Link
+func (u *GitHubUser) Id() string {
+	return u.UserLogin
 }
 
 func (u *GitHubUser) Provider() string {
 	return "github.com"
+}
+
+func (u *GitHubUser) Name() string {
+	return u.UserName
+}
+
+func (u *GitHubUser) Email() string {
+	return u.UserEmail
+}
+
+func (u *GitHubUser) Picture() string {
+	return u.UserAvatar
+}
+
+func (u *GitHubUser) Link() string {
+	return u.UserLink
 }
 
 // GithubProvider is an implementation of Github's Oauth2 protocol.
@@ -90,6 +82,7 @@ func (self *GithubProvider) GetAuthenticatedUser(r *http.Request) (User, error) 
 	// Use the Access Token to retrieve the user's information
 	user := GitHubUser{}
 	err = self.OAuth2Mixin.GetAuthenticatedUser(self.UserResourceUrl, token, nil, &user)
+fmt.Println(user)
 	return &user, err
 }
 

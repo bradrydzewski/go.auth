@@ -90,6 +90,6 @@ func (self *OpenIdProvider) GetAuthenticatedUser(r *http.Request) (User, error) 
 
 	// Return the User data
 	// TODO for now we are re-using the Google User
-	user := GoogleUser{Id: email, Email: email, Name: fullName}
+	user := user{id: email, email: email, name: fullName, provider: self.endpoint }
 	return &user, nil
 }

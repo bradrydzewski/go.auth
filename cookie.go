@@ -10,14 +10,15 @@ import (
 
 // SetUserCookie creates a secure cookie for the given username, indicating the
 // user is authenticated.
-func SetUserCookie(w http.ResponseWriter, r *http.Request, provider, user string) {
+func SetUserCookie(w http.ResponseWriter, r *http.Request, user User) {
 
 	// cookie expires in 2 weeks
 	exp := time.Now().Add(Config.CookieExp)
 
 	// generate cookie valid for 24 hours for user
-	value := authcookie.New(provider + "|" + user, exp, Config.CookieSecret)
-
+	userStr := user.Id()+"|"+user.Provider()+"|"+user.Name()+"|"+user.Email()+"|"+user.Link()+"|"+user.Picture()
+	value := authcookie.New(userStr, exp, Config.CookieSecret)
+println("Saving Session: " + userStr)
 	cookie := http.Cookie{
 		Name:   Config.CookieName,
 		Value:  value,
@@ -50,14 +51,14 @@ func DeleteUserCookie(w http.ResponseWriter, r *http.Request) {
 
 // GetUserCookie will get the Username from the http session. If the session is
 // inactive, or if the session has expired, then an error will be returned.
-func GetUserCookie(r *http.Request) (provider, user string, err error) {
+func GetUserCookie(r *http.Request) (User, error) {
 	//look for the authcookie
 	cookie, err := r.Cookie(Config.CookieName)
 
 	//if doesn't exist (or is malformed) redirect
 	//back to the login url
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
 	login, expires, err := authcookie.Parse(cookie.Value, Config.CookieSecret)
@@ -65,16 +66,31 @@ func GetUserCookie(r *http.Request) (provider, user string, err error) {
 	//if there was an error parsing the cookie, redirect
 	//back to the login url
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
 	//if the cookie is expired, redirect back to the
 	//login url
 	if time.Now().After(expires) {
-		return "", "", errors.New("User session Expired")
+		return nil, errors.New("User session Expired")
 	}
 
 	// split the user from the provider
 	s := strings.Split(login, "|")
-	return s[0], s[1], nil
+println("GOT USER: " + login)
+	// the string should be split into 6 strings
+	// (id, provider, name, email, link, picture)
+	if len(s) != 6 {
+		return nil, errors.New("Invalid Cookie Format")
+	}
+
+	u := user {
+		id       : s[0],
+		provider : s[1],
+		name     : s[2],
+		email    : s[3],
+		link     : s[4],
+		picture  : s[5],
+	}
+	return &u, nil
 }

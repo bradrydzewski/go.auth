@@ -79,7 +79,7 @@ func (self *AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // DefaultSuccess will redirect a User, using an http.Redirect, to the
 // Config.LoginSuccessRedirect url upon successful authentication.
 var DefaultSuccess = func(w http.ResponseWriter, r *http.Request, u User) {
-	SetUserCookie(w, r, u.Provider(), u.Username())
+	SetUserCookie(w, r, u)
 	http.Redirect(w, r, Config.LoginSuccessRedirect, http.StatusSeeOther)
 }
 
@@ -121,7 +121,7 @@ type AuthConfig struct {
 // Config is the default implementation of Config, and is used by
 // DetaultAuthCallback, Secure, and SecureFunc.
 var Config = &AuthConfig{
-	CookieName:            "UID",
+	CookieName:            "_sess",
 	CookieExp:             time.Hour * 24 * 14,
 	CookieMaxAge:          0,
 	LoginRedirect:         "/auth/login",
@@ -130,31 +130,46 @@ var Config = &AuthConfig{
 
 // A User is returned by the AuthProvider upon success authentication.
 type User interface {
-	Userid() string
-	Username() string
-	Password() string
-	Fullname() string
-	EmailAddr() string
-	Icon() string
-	Url() string
-	Provider() string
+	Id()       string // Unique identifier of the user
+	Provider() string // Name of the Authentication Provider (ie google, github)
+	Name()     string // Name of the User (ie lastname, firstname)
+	Email()    string // Email Address of the User
+	Picture()  string // URL of the User's Profile picture
+	Link()     string // URL of the User's Profile page
 }
+
+// An implementation of User, for internal package use only.
+type user struct {
+	id       string
+	provider string
+	name     string
+	email    string
+	link     string
+	picture  string
+}
+
+func (u *user) Id() string       { return u.id }
+func (u *user) Provider() string { return u.provider }
+func (u *user) Name() string     { return u.name }
+func (u *user) Email() string    { return u.email }
+func (u *user) Link() string     { return u.link }
+func (u *user) Picture() string  { return u.picture }
 
 // SecureFunc will attempt to verify a user session exists prior to executing
 // the http.HandlerFunc. If no valid sessions exists, the user will be
 // redirected to the Config.LoginRedirect Url.
 func SecureFunc(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, user, err := GetUserCookie(r)
+		user, err := GetUserCookie(r)
 
 		//if no active user session then authorize user
-		if user == "" || err != nil {
+		if err != nil || user.Id() == "" {
 			http.Redirect(w, r, Config.LoginRedirect, http.StatusSeeOther)
 			return
 		}
 
 		//else, add the user to the URL and continue
-		r.URL.User = url.User(user)
+		r.URL.User = url.User(user.Id())
 		handler(w, r)
 	}
 }
