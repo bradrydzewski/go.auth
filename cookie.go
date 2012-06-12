@@ -18,7 +18,7 @@ func SetUserCookie(w http.ResponseWriter, r *http.Request, user User) {
 	// generate cookie valid for 24 hours for user
 	userStr := user.Id()+"|"+user.Provider()+"|"+user.Name()+"|"+user.Email()+"|"+user.Link()+"|"+user.Picture()
 	value := authcookie.New(userStr, exp, Config.CookieSecret)
-println("Saving Session: " + userStr)
+
 	cookie := http.Cookie{
 		Name:   Config.CookieName,
 		Value:  value,
@@ -77,7 +77,7 @@ func GetUserCookie(r *http.Request) (User, error) {
 
 	// split the user from the provider
 	s := strings.Split(login, "|")
-println("GOT USER: " + login)
+
 	// the string should be split into 6 strings
 	// (id, provider, name, email, link, picture)
 	if len(s) != 6 {

@@ -82,7 +82,6 @@ func (self *GithubProvider) GetAuthenticatedUser(r *http.Request) (User, error) 
 	// Use the Access Token to retrieve the user's information
 	user := GitHubUser{}
 	err = self.OAuth2Mixin.GetAuthenticatedUser(self.UserResourceUrl, token, nil, &user)
-fmt.Println(user)
 	return &user, err
 }
 
