@@ -8,7 +8,6 @@ import (
 
 // GitHubUser represents a GitHub user object returned by the OAuth2 service.
 type GitHubUser struct {
-	UserId      string `json:"id"`
 	UserEmail   string `json:"email"`
 	UserAvatar  string `json:"avatar_url"`
 	UserName    string `json:"name"`
