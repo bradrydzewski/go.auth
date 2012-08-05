@@ -134,6 +134,5 @@ func (self *OAuth2Mixin) GetAuthenticatedUser(endpoint string, accessToken strin
 	}
 
 	//unmarshal user json
-	json.Unmarshal(userData, &resp)
-	return nil
+	return json.Unmarshal(userData, &resp)
 }
