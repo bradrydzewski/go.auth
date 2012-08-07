@@ -19,22 +19,43 @@ var homepage = `
 </html>
 `
 
-var privatepage = `
+var privatepage1 = `
 <html>
 	<head>
 		<title>Login</title>
 	</head>
 	<body>
+		<div>oauth url: <a href="http://github.com/%s" target="_blank">%s</a></div>
+		<div><a href="/auth/logout">Logout</a><div>
+	</body>
+</html>
+`
+
+var privatepage2 = `
+<html>
+	<head>
+		<title>Login</title>
+	</head>
+	<body>
+		<div><img src="%s" /></div>
 		<div>oauth url: <a href="%s" target="_blank">%s</a></div>
 		<div><a href="/auth/logout">Logout</a><div>
 	</body>
 </html>
 `
 
-// private webpage, authentication required
-func Private(w http.ResponseWriter, r *http.Request) {
+// private webpage, authentication required, with User Id injected in the
+// r.URL.User.Username() field
+func Private1(w http.ResponseWriter, r *http.Request) {
 	user := r.URL.User.Username()
-	fmt.Fprintf(w, fmt.Sprintf(privatepage, user, user))
+	fmt.Fprintf(w, fmt.Sprintf(privatepage1, user, user))
+}
+
+// private webpage, authentication required, with User struct passed directly
+// into the function
+func Private2(w http.ResponseWriter, r *http.Request, user auth.User) {
+	page := fmt.Sprintf(privatepage2, user.Picture(), user.Id(), user.Name())
+	fmt.Fprintf(w, page)
 }
 
 // public webpage, no authentication required
@@ -58,7 +79,7 @@ func main() {
 
 	// set the auth parameters
 	auth.Config.CookieSecret = []byte("7H9xiimk2QdTdYI7rDddfJeV")
-	auth.Config.LoginSuccessRedirect = "/private"
+	auth.Config.LoginSuccessRedirect = "/private2"
 
 	// login handler
 	githubHandler := auth.Github(*githubClientKey, *githubSecretKey)
@@ -71,7 +92,8 @@ func main() {
 	http.HandleFunc("/", Public)
 
 	// private, secured urls
-	http.HandleFunc("/private", auth.SecureFunc(Private))
+	http.HandleFunc("/private1", auth.SecureFunc(Private1))
+	http.HandleFunc("/private2", auth.SecureUserFunc(Private2))
 
 	println("github demo starting on port 8080")
 	err := http.ListenAndServe(":8080", nil)

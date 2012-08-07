@@ -50,6 +50,7 @@ func Twitter(key, secret, callback string) *AuthHandler {
 // ServeHTTP handles the authentication request and manages the
 // authentication flow.
 func (self *AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
 	// Redirect the user, if required
 	if self.provider.RedirectRequired(r) == true {
 		self.provider.Redirect(w, r)
@@ -171,5 +172,49 @@ func SecureFunc(handler http.HandlerFunc) http.HandlerFunc {
 		//else, add the user to the URL and continue
 		r.URL.User = url.User(user.Id())
 		handler(w, r)
+	}
+}
+
+// UserHandlerFunc type is an adapter that extends the standard
+// http.HandlerFunc to include the authenticated User details.
+type UserHandlerFunc func(w http.ResponseWriter, r *http.Request, u User)
+
+// SecureUserFunc will attempt to verify a user session exists prior to
+// executing the auth.SecureHandlerFunc function. If no valid sessions exists,
+// the user will be redirected to a login URL.
+func SecureUserFunc(handler UserHandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, err := GetUserCookie(r)
+
+		//if no active user session then authorize user
+		if err != nil || user.Id() == "" {
+			http.Redirect(w, r, Config.LoginRedirect, http.StatusSeeOther)
+			return
+		}
+
+		//else, invoke the handler and provide the suer
+		handler(w, r, user)
+	}
+}
+
+// SecureUserOptFunc will attempt to verify a user session exists prior to
+// executing the auth.SecureHandlerFunc function. If no valid sessions exists,
+// the user will be allowed to continue, however, the auth.User value will
+// be nil.
+//
+// This function is intended for pages that are Publicly visible, but display
+// additional details for authenticated users.
+func SecureUserOptFunc(handler UserHandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, err := GetUserCookie(r)
+
+		//if no active user session then authorize user
+		if err != nil || user.Id() == "" {
+			handler(w, r, nil)
+			return
+		}
+
+		//else, invoke the handler and provide the suer
+		handler(w, r, user)
 	}
 }

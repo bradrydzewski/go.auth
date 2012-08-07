@@ -22,7 +22,7 @@ We plan to add support for the following providers:
 * LinkedIn
 
 # Sample Code
-Example program using the Google OpenId auth provider:
+Example program using the Github OAuth auth provider:
 
 ```go
 // Set the default authentication configuration parameters
@@ -42,12 +42,29 @@ http.HandleFunc("/private", auth.SecureFunc(Private))
 ```
 
 ## User data
-The user data is passed to your Handler via the URL's `User` field:
+The `auth.SecureFunc` wraps a standard `http.HandlerFunc` and injects the username
+into the http request's `r.URL.User.Username()` field:
 
 ```go
-func Foo(w http.ResponseWriter, r *http.Request) {
+func Private(w http.ResponseWriter, r *http.Request) {
 	user := r.URL.User.Username()
 }
+```
+
+If you want additional user data you must implement our custom handler, and wrap
+it with the `auth.SecureUserFunc`. This adds an additional `User` parameter to
+your method signature that provides the full set of available user data:
+
+```go
+func Private(w http.ResponseWriter, r *http.Request, u auth.User) {
+	username := u.Id()
+	fullname := u.Name()
+	avatar := u.Picture()
+	email := u.Email()
+	...
+}
+
+http.HandleFunc("/foo", auth.SecureUserFunc(Private))
 ```
 
 # Configuration
