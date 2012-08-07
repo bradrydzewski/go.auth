@@ -6,11 +6,10 @@ import (
 	"net/url"
 )
 
-// GitHubUser represents a GitHub user object returned by the OAuth2 service.
 type GitHubUser struct {
-	UserEmail   string `json:"email"`
-	UserAvatar  string `json:"avatar_url"`
-	UserName    string `json:"name"`
+	UserEmail   interface{} `json:"email"`
+	UserName    interface{} `json:"name"`
+	UserAvatar  interface{} `json:"avatar_url"`
 	UserLogin   string `json:"login"`
 	UserLink    string `json:"html_url"`
 }
@@ -23,21 +22,26 @@ func (u *GitHubUser) Provider() string {
 	return "github.com"
 }
 
-func (u *GitHubUser) Name() string {
-	return u.UserName
-}
-
-func (u *GitHubUser) Email() string {
-	return u.UserEmail
-}
-
-func (u *GitHubUser) Picture() string {
-	return u.UserAvatar
-}
-
 func (u *GitHubUser) Link() string {
 	return u.UserLink
 }
+
+func (u *GitHubUser) Name() string {
+	if u.UserName == nil { return "" }
+	return u.UserName.(string)
+}
+
+func (u *GitHubUser) Email() string {
+	if u.UserEmail == nil { return "" }
+	return u.UserEmail.(string)
+}
+
+func (u *GitHubUser) Picture() string {
+	if u.UserAvatar == nil { return "" }
+	return u.UserAvatar.(string)
+}
+
+
 
 // GithubProvider is an implementation of Github's Oauth2 protocol.
 // See http://developer.github.com/v3/oauth/
