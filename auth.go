@@ -178,14 +178,14 @@ func SecureFunc(handler http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// UserHandlerFunc type is an adapter that extends the standard
+// SecureHandlerFunc type is an adapter that extends the standard
 // http.HandlerFunc to include the authenticated User details.
-type UserHandlerFunc func(w http.ResponseWriter, r *http.Request, u User)
+type SecureHandlerFunc func(w http.ResponseWriter, r *http.Request, u User)
 
 // SecureUserFunc will attempt to verify a user session exists prior to
 // executing the auth.SecureHandlerFunc function. If no valid sessions exists,
 // the user will be redirected to a login URL.
-func SecureUserFunc(handler UserHandlerFunc) http.HandlerFunc {
+func SecureUserFunc(handler SecureHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, err := GetUserCookie(r)
 
@@ -200,14 +200,14 @@ func SecureUserFunc(handler UserHandlerFunc) http.HandlerFunc {
 	}
 }
 
-// SecureUserOptFunc will attempt to verify a user session exists prior to
-// executing the auth.SecureHandlerFunc function. If no valid sessions exists,
-// the user will be allowed to continue, however, the auth.User value will
-// be nil.
+// SecureGuestFunc will attempt to retireve authenticated User details from
+// the current session when invoking the auth.SecureHandlerFunc function. If no
+// User details are found the handler will allow the user to proceed as a guest,
+// which means the User details will be nil. 
 //
 // This function is intended for pages that are Publicly visible, but display
 // additional details for authenticated users.
-func SecureUserOptFunc(handler UserHandlerFunc) http.HandlerFunc {
+func SecureGuestFunc(handler SecureHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, err := GetUserCookie(r)
 
