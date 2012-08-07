@@ -7,27 +7,24 @@ import (
 )
 
 type GitHubUser struct {
-	UserEmail   interface{} `json:"email"`
-	UserName    interface{} `json:"name"`
-	UserAvatar  interface{} `json:"avatar_url"`
-	UserLogin   string `json:"login"`
-	UserLink    string `json:"html_url"`
+	UserEmail    interface{} `json:"email"`
+	UserName     interface{} `json:"name"`
+	UserGravatar interface{} `json:"gravatar_id"`
+	UserCompany  interface{} `json:"company"`
+	UserLogin    string      `json:"login"`
+	UserLink     string      `json:"html_url"`
 }
 
-func (u *GitHubUser) Id() string {
-	return u.UserLogin
-}
+func (u *GitHubUser) Id() string       { return u.UserLogin }
+func (u *GitHubUser) Provider() string { return "github.com" }
+func (u *GitHubUser) Link() string     { return u.UserLink }
 
-func (u *GitHubUser) Provider() string {
-	return "github.com"
-}
-
-func (u *GitHubUser) Link() string {
-	return u.UserLink
-}
+// Below fields need to be parsed as interface{} and converted to String
+// because Golang (as of version 1.0) does not support parsing JSON Strings
+// with an explicit null value.
 
 func (u *GitHubUser) Name() string {
-	if u.UserName == nil { return "" }
+	if u.UserName == nil { return "" }; 
 	return u.UserName.(string)
 }
 
@@ -37,10 +34,16 @@ func (u *GitHubUser) Email() string {
 }
 
 func (u *GitHubUser) Picture() string {
-	if u.UserAvatar == nil { return "" }
-	return u.UserAvatar.(string)
+	if u.UserGravatar == nil { return "" }
+	// use the Gravatar Id instead of the Avatar URL, which has a bunch
+	// of un-necessary data (as far as I can tell) appended to the end.
+	return "https://secure.gravatar.com/avatar/" + u.UserGravatar.(string)
 }
 
+func (u *GitHubUser) Org() string {
+	if u.UserCompany == nil { return "" }
+	return u.UserCompany.(string)
+}
 
 
 // GithubProvider is an implementation of Github's Oauth2 protocol.

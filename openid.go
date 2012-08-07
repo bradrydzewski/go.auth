@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 )
@@ -85,7 +86,7 @@ func (self *OpenIdProvider) GetAuthenticatedUser(r *http.Request) (User, error) 
 	// Get the user details from the URL parameters
 	lastName := params.Get("openid.ext1.value.lastname")
 	firstName := params.Get("openid.ext1.value.firstname")
-	fullName := firstName + " " + lastName
+	fullName := fmt.Sprintf("%s %s", firstName, lastName)
 	email := params.Get("openid.ext1.value.email")
 
 	// Return the User data

@@ -16,29 +16,13 @@ type GoogleUser struct {
 	UserLink    string `json:"link"`
 }
 
-func (u *GoogleUser) Id() string {
-	return u.UserId
-}
-
-func (u *GoogleUser) Provider() string {
-	return "google.com"
-}
-
-func (u *GoogleUser) Name() string {
-	return u.UserName
-}
-
-func (u *GoogleUser) Email() string {
-	return u.UserEmail
-}
-
-func (u *GoogleUser) Picture() string {
-	return u.UserPicture
-}
-
-func (u *GoogleUser) Link() string {
-	return u.UserLink
-}
+func (u *GoogleUser) Id() string       { return u.UserId }
+func (u *GoogleUser) Provider() string { return "google.com" }
+func (u *GoogleUser) Name() string     { return u.UserName }
+func (u *GoogleUser) Email() string    { return u.UserEmail }
+func (u *GoogleUser) Picture() string  { return u.UserPicture }
+func (u *GoogleUser) Link() string     { return u.UserLink }
+func (u *GoogleUser) Org() string      { return "" }
 
 // GoogleProvider is an implementation of Google's Oauth2 
 // for web application flow.

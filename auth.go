@@ -135,6 +135,7 @@ type User interface {
 	Provider() string // Name of the Authentication Provider (ie google, github)
 	Name()     string // Name of the User (ie lastname, firstname)
 	Email()    string // Email Address of the User
+	Org()      string // Company or Organization the User belongs to
 	Picture()  string // URL of the User's Profile picture
 	Link()     string // URL of the User's Profile page
 }
@@ -145,6 +146,7 @@ type user struct {
 	provider string
 	name     string
 	email    string
+	org      string
 	link     string
 	picture  string
 }
@@ -153,6 +155,7 @@ func (u *user) Id() string       { return u.id }
 func (u *user) Provider() string { return u.provider }
 func (u *user) Name() string     { return u.name }
 func (u *user) Email() string    { return u.email }
+func (u *user) Org() string      { return u.org }
 func (u *user) Link() string     { return u.link }
 func (u *user) Picture() string  { return u.picture }
 
