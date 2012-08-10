@@ -158,6 +158,7 @@ func (u *user) Email() string    { return u.email }
 func (u *user) Org() string      { return u.org }
 func (u *user) Link() string     { return u.link }
 func (u *user) Picture() string  { return u.picture }
+func (u *user) Avatar() string   { return u.picture }
 
 // SecureFunc will attempt to verify a user session exists prior to executing
 // the http.HandlerFunc. If no valid sessions exists, the user will be
@@ -182,10 +183,10 @@ func SecureFunc(handler http.HandlerFunc) http.HandlerFunc {
 // http.HandlerFunc to include the authenticated User details.
 type SecureHandlerFunc func(w http.ResponseWriter, r *http.Request, u User)
 
-// SecureUserFunc will attempt to verify a user session exists prior to
+// SecureUser will attempt to verify a user session exists prior to
 // executing the auth.SecureHandlerFunc function. If no valid sessions exists,
 // the user will be redirected to a login URL.
-func SecureUserFunc(handler SecureHandlerFunc) http.HandlerFunc {
+func SecureUser(handler SecureHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, err := GetUserCookie(r)
 
@@ -200,14 +201,14 @@ func SecureUserFunc(handler SecureHandlerFunc) http.HandlerFunc {
 	}
 }
 
-// SecureGuestFunc will attempt to retireve authenticated User details from
+// SecureGuest will attempt to retireve authenticated User details from
 // the current session when invoking the auth.SecureHandlerFunc function. If no
 // User details are found the handler will allow the user to proceed as a guest,
 // which means the User details will be nil. 
 //
 // This function is intended for pages that are Publicly visible, but display
 // additional details for authenticated users.
-func SecureGuestFunc(handler SecureHandlerFunc) http.HandlerFunc {
+func SecureGuest(handler SecureHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, err := GetUserCookie(r)
 
