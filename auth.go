@@ -128,7 +128,7 @@ var Config = &AuthConfig{
 	CookieName:            "_sess",
 	CookieExp:             time.Hour * 24 * 14,
 	CookieMaxAge:          0,
-	CookieSecure:          false,
+	CookieSecure:          true,
 	CookieHttpOnly:        true,
 	LoginRedirect:         "/auth/login",
 	LoginSuccessRedirect:  "/",

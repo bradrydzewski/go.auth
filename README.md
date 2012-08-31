@@ -29,6 +29,7 @@ Example program using the Github OAuth auth provider:
 auth.Config.CookieSecret         = []byte("asdfasdfasfasdfasdfafsd")
 auth.Config.LoginRedirect        = "/auth/login" // send user here to login
 auth.Config.LoginSuccessRedirect = "/private"    // send user here post-login
+auth.Config.CookieSecure         = false         // for local-testing only
 
 // Create your login handler
 githubHandler := auth.Github(githubAccessKey, githubSecretKey)
@@ -40,6 +41,10 @@ http.HandleFunc("/public", Public)
 // Example of a secured http handler
 http.HandleFunc("/private", auth.SecureFunc(Private))
 ```
+
+It is important to note that we have set `auth.Config.CookieSecure` to false
+because we are testing locally, without using SSL. In production this flag should
+ALWAYS be set to true and used in conjunction with SSL.
 
 ## User data
 The `auth.SecureFunc` wraps a standard `http.HandlerFunc` and injects the username
@@ -85,6 +90,16 @@ http.HandleFunc("/foo", auth.SecureUserFunc(Private))
  <td>auth.Config.CookieSecret</td>
  <td>key used to encrypt the cookie value</td>
  <td>nil</td>
+</tr>
+<tr>
+ <td>auth.Config.CookieSecure</td>
+ <td>set the cookie's secure flag (true/false)</td>
+ <td>true</td>
+</tr>
+<tr>
+ <td>auth.Config.CookieHttpOnly</td>
+ <td>set the cookie's HttpOnly flag (true/false)</td>
+ <td>true</td>
 </tr>
 <tr>
  <td>auth.Config.CookieExp</td>
