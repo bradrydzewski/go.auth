@@ -115,8 +115,11 @@ type AuthConfig struct {
 	CookieName            string
 	CookieExp             time.Duration
 	CookieMaxAge          int
+	CookieSecure          bool
+	CookieHttpOnly        bool
 	LoginRedirect         string
 	LoginSuccessRedirect  string
+	
 }
 
 // Config is the default implementation of Config, and is used by
@@ -125,6 +128,8 @@ var Config = &AuthConfig{
 	CookieName:            "_sess",
 	CookieExp:             time.Hour * 24 * 14,
 	CookieMaxAge:          0,
+	CookieSecure:          false,
+	CookieHttpOnly:        true,
 	LoginRedirect:         "/auth/login",
 	LoginSuccessRedirect:  "/",
 }

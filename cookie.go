@@ -23,7 +23,8 @@ func SetUserCookie(w http.ResponseWriter, r *http.Request, user User) {
 		Name:     Config.CookieName,
 		Path:     "/",
 		Domain:   r.URL.Host,
-		HttpOnly: true,
+		HttpOnly: Config.CookieHttpOnly,
+		Secure:   Config.CookieSecure,
 	}
 
 	// if not a session cookie set the MaxAge
