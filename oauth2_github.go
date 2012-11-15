@@ -11,13 +11,12 @@ type GitHubUser struct {
 	UserName     interface{} `json:"name"`
 	UserGravatar interface{} `json:"gravatar_id"`
 	UserCompany  interface{} `json:"company"`
+	UserLink     interface{} `json:"html_url"`
 	UserLogin    string      `json:"login"`
-	UserLink     string      `json:"html_url"`
 }
 
 func (u *GitHubUser) Id() string       { return u.UserLogin }
 func (u *GitHubUser) Provider() string { return "github.com" }
-func (u *GitHubUser) Link() string     { return u.UserLink }
 
 // Below fields need to be parsed as interface{} and converted to String
 // because Golang (as of version 1.0) does not support parsing JSON Strings
@@ -31,6 +30,11 @@ func (u *GitHubUser) Name() string {
 func (u *GitHubUser) Email() string {
 	if u.UserEmail == nil { return "" }
 	return u.UserEmail.(string)
+}
+
+func (u *GitHubUser) Link() string {
+	if u.UserLink == nil { return "" }
+	return u.UserLink.(string)
 }
 
 func (u *GitHubUser) Picture() string {
@@ -84,6 +88,12 @@ func (self *GithubProvider) GetAuthenticatedUser(r *http.Request) (User, error) 
 		return nil, err
 	}
 
+println("Token:", token)
+println("ClientId:", self.ClientId)
+println("ClientSecret:", self.ClientSecret)
+
+
+ 
 	// Use the Access Token to retrieve the user's information
 	user := GitHubUser{}
 	err = self.OAuth2Mixin.GetAuthenticatedUser(self.UserResourceUrl, token, nil, &user)

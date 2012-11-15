@@ -62,6 +62,7 @@ func main() {
 	// set the auth parameters
 	auth.Config.CookieSecret = []byte("7H9xiimk2QdTdYI7rDddfJeV")
 	auth.Config.LoginSuccessRedirect = "/private"
+	auth.Config.CookieSecure = false
 
 	// login handler
 	googHandler := auth.Google(*googleAccessKey, *googleSecretKey, googleRedirect)

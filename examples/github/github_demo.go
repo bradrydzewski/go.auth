@@ -80,6 +80,7 @@ func main() {
 	// set the auth parameters
 	auth.Config.CookieSecret = []byte("7H9xiimk2QdTdYI7rDddfJeV")
 	auth.Config.LoginSuccessRedirect = "/private2"
+	auth.Config.CookieSecure = false
 
 	// login handler
 	githubHandler := auth.Github(*githubClientKey, *githubSecretKey)
@@ -93,7 +94,7 @@ func main() {
 
 	// private, secured urls
 	http.HandleFunc("/private1", auth.SecureFunc(Private1))
-	http.HandleFunc("/private2", auth.SecureUserFunc(Private2))
+	http.HandleFunc("/private2", auth.SecureUser(Private2))
 
 	println("github demo starting on port 8080")
 	err := http.ListenAndServe(":8080", nil)
