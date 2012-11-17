@@ -42,6 +42,11 @@ func OpenId(url string) *AuthHandler {
 	return New(NewOpenIdProvider(url))
 }
 
+// Bitbucket allocates and returns a new AuthHandler, using the BitbucketProvider.
+func Bitbucket(key, secret, callback string) *AuthHandler {
+	return New(NewBitbucketProvider(key, secret, callback))
+}
+
 // Twitter allocates and returns a new AuthHandler, using the TwitterProvider.
 func Twitter(key, secret, callback string) *AuthHandler {
 	return New(NewTwitterProvider(key, secret, callback))
