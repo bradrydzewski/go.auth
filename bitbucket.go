@@ -46,7 +46,7 @@ func NewBitbucketProvider(key, secret, callback string) *BitbucketProvider {
 func (self *BitbucketProvider) Redirect(w http.ResponseWriter, r *http.Request) {
 	//params := make(url.Values)
 	//params.Add("scope", "users,repo")
-	self.OAuth1Mixin.AuthorizeRedirect(w, r, self.AuthorizeUrl, nil)
+	self.OAuth1Mixin.AuthorizeRedirect(w, r, self.AuthorizeUrl)
 }
 
 // GetAuthenticatedUser will upgrade the oauth_token to an access token, and
