@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -18,42 +19,6 @@ import (
 
 	"code.google.com/p/vitess/go/cache"
 )
-
-// cache used to store the oauth_token_secret between sessions. By default it
-// stores 1MB of data. When the limit is reached the cache will clear out older
-// items (which by the time they are removed from the cache should not be
-// needed anymore). 
-var tokenCache = cache.NewLRUCache(1048576) 
-
-// tokenCacheItem represents an OAuth token that implements the cache.Value
-// interface, and can therefore be stored in the LRUCache.
-//type tokenCacheItem string;
-//func (i tokenCacheItem) Size()   int    { return len(i) }
-//func (i tokenCacheItem) String() string { return string(i) }
-
-
-
-// requestToken stores the values returned when requesting a request token. The
-// request token is used to obtain authorization from a user, and exchanged
-// for an access token.
-type requestToken {
-	Token  string // the oauth_token value
-	Secret string // the oauth_token_secret value
-}
-
-// Gets the size (in bytes) of the Token. This is used to implement the
-// cache.Value interface, allowing this struct to be stored in the LRUCache.
-func (t requestToken) Size() int {
-	return len(t.Token) + len(t.Secret)
-}
-
-// accessToken stores the values returned when upgrading a request token
-// to an access token. The access token gives the consumer access to the
-// User's protected resources.
-type accessToken {
-	Token  string // the oauth_token value
-	Secret string // the oauth_token_secret value
-}
 
 // Abstract implementation of OAuth2 for user authentication.
 type OAuth1Mixin struct {
@@ -78,8 +43,7 @@ func (self *OAuth1Mixin) RedirectRequired(r *http.Request) bool {
 //
 // A Successful Login / Authorization should return both the oauth_token and
 // the oauth_verifier to the callback URL.
-func (self *OAuth1Mixin) AuthorizeRedirect(w http.ResponseWriter, r *http.Request,
-	endpoint string, params url.Values) error {
+func (self *OAuth1Mixin) AuthorizeRedirect(w http.ResponseWriter, r *http.Request, endpoint string) error {
 
 	//create the http request to fetch a Request Token.
 	requestTokenUrl, _ := url.Parse(self.RequestToken)
@@ -92,7 +56,7 @@ func (self *OAuth1Mixin) AuthorizeRedirect(w http.ResponseWriter, r *http.Reques
 	}
 
 	//set the header variables (using defualts), and add the callback URL
-	headers := self.headers()
+	headers := headers(self.ConsumerKey)
 	headers["oauth_callback"] = self.CallbackUrl
 	
 	//sign the request ...
@@ -110,43 +74,26 @@ func (self *OAuth1Mixin) AuthorizeRedirect(w http.ResponseWriter, r *http.Reques
 		return err
 	}
 
-	//get the request body
-	body, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
+	//parse the oauth_token and oauth_token_secret from the body
+	t, err := parseToken(resp.Body)
 	if err != nil {
 		return err
 	}
 
-	//parse the request token from the body
-	parts, err := url.ParseQuery(string(body))
-	if err != nil {
-		return err
-	}
+	//add the request token to the cache, where the oauth_token is the key.
+	//we do this because we will need to reference the request token's
+	//oauth_token_secret after the user has authentication, and upgrade to
+	//an access token.
+	tokenCache.Set(t.Token, t)
 
-	//now we have the request token, we can re-direct the user to the
-	//login screen to authorize us.
-	requestToken := parts.Get("oauth_token")
-	secretToken := parts.Get("oauth_token_secret")
-	if len(requestToken)==0 || len(secretToken)==0 {
-		return errors.New(string(body))
-	}
+	// construct the login URL
+	params := make(url.Values)
+	params.Add("oauth_token", t.Token)
 
-	//add the oauth_token_secret to the cache
-	tokenCache.Set(requestToken, tokenCacheItem(secretToken))
-
-	//create the URL params, if a nil value was passed to this function	
-	if params == nil {
-		params = make(url.Values)
-	}
-
-	// add the token to the login URL's query parameters
-	params.Add("oauth_token", requestToken)
-
-	// create login url
 	loginUrl, _ := url.Parse(endpoint)
 	loginUrl.RawQuery = params.Encode()
 
-	// redirect to login
+	// redirect to the login url
 	http.Redirect(w, r, loginUrl.String(), http.StatusSeeOther)
 	return nil
 }
@@ -167,22 +114,22 @@ func (self *OAuth1Mixin) AuthorizeToken(r *http.Request) (string, string, error)
 
 	//parse oauth data from Redirect URL
 	queryParams := r.URL.Query()
-	token := queryParams.Get("oauth_token")
+	oauthToken := queryParams.Get("oauth_token")
 	verifier := queryParams.Get("oauth_verifier")
 
 	//get the secret token from the session cache
-	cachedSecretToken, ok := tokenCache.Get(token)
+	cachedSecretToken, ok := tokenCache.Get(oauthToken)
 	if !ok {
 		//TODO throw some kind of exception
 	}
 
 	//set the header variables (using defualts), and add the callback URL
-	headers := self.headers()
-	headers["oauth_token"] = token
+	headers := headers(self.ConsumerKey)
+	headers["oauth_token"] = oauthToken
 	headers["oauth_verifier"] = verifier
 
 	//sign the request ...
-	key := url.QueryEscape(self.ConsumerSecret) + "&" + url.QueryEscape(cachedSecretToken.(tokenCacheItem).String())
+	key := url.QueryEscape(self.ConsumerSecret) + "&" + url.QueryEscape(cachedSecretToken.(*token).Secret)
 	base := requestString(req.Method, req.URL.String(), headers)
 	headers["oauth_signature"] = sign(base, key)
 
@@ -200,21 +147,12 @@ func (self *OAuth1Mixin) AuthorizeToken(r *http.Request) (string, string, error)
 	}
 
 	//get the request body
-	body, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return "","", err
-	}
-
-	//parse the request token from the body
-	parts, err := url.ParseQuery(string(body))
+	t, err := parseToken(resp.Body)
 	if err != nil {
 		return "", "", err
 	}
 
-	requestToken := parts.Get("oauth_token")
-	secretToken := parts.Get("oauth_token_secret")
-	return requestToken, secretToken, nil
+	return t.Token, t.Secret, nil
 }
 
 func (self *OAuth1Mixin) GetAuthenticatedUser(endpoint, token, secret string, resp interface{}) error {
@@ -232,7 +170,7 @@ func (self *OAuth1Mixin) GetAuthenticatedUser(endpoint, token, secret string, re
 	}
 
 	//set the header variables (using defualts), and add the callback URL
-	headers := self.headers()
+	headers := headers(self.ConsumerKey)
 	headers["oauth_token"] = token
 
 	//sign the request ...
@@ -262,22 +200,81 @@ func (self *OAuth1Mixin) GetAuthenticatedUser(endpoint, token, secret string, re
 }
 
 
+// Token & Cache ---------------------------------------------------------------
+
+// cache used to store the oauth_token_secret between sessions. By default it
+// stores 1MB of data. When the limit is reached the cache will clear out older
+// items (which by the time they are removed from the cache should not be
+// needed anymore). 
+var tokenCache = cache.NewLRUCache(1048576) 
+
+// token represents a Request Token or Access Token
+type token struct {
+	Token  string // the oauth_token value
+	Secret string // the oauth_token_secret value
+}
+
+// Parses a Token from the stream (typically a http.Request Body).
+func parseToken(reader io.ReadCloser) (*token, error)  {
+	body, err := ioutil.ReadAll(reader)
+	reader.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	//parse the request token from the body
+	bodyStr := string(body)
+	parts, err := url.ParseQuery(string(body))
+	if err != nil {
+		return nil, err
+	}
+
+	t := token{}
+	t.Token = parts.Get("oauth_token")
+	t.Secret = parts.Get("oauth_token_secret")
+
+	switch {
+	case len(t.Token) == 0  : return nil, errors.New(bodyStr)
+	case len(t.Secret) == 0 : return nil, errors.New(bodyStr)
+	}
+
+	return &t, nil
+}
+
+// Gets the size (in bytes) of the Token. This is used to implement the
+// cache.Value interface, allowing this struct to be stored in the LRUCache.
+func (t token) Size() int {
+	return len(t.Token) + len(t.Secret)
+}
 
 
 // Helper Functions ------------------------------------------------------------
 
-func (self *OAuth1Mixin) headers() map[string]string {
+// Gets the default set of OAuth1.0a headers.
+func headers(consumerKey string) map[string]string {
 	return map[string]string{
-		"oauth_consumer_key"     : self.ConsumerKey,
-		"oauth_nonce"            : strconv.FormatInt(rand.New(rand.NewSource(time.Now().Unix())).Int63(), 10),
+		"oauth_consumer_key"     : consumerKey,
+		"oauth_nonce"            : strconv.FormatInt(nonce(), 10),
 		"oauth_signature_method" : "HMAC-SHA1",
-		"oauth_timestamp"        : strconv.FormatInt(time.Now().Unix(), 10),
+		"oauth_timestamp"        : strconv.FormatInt(now(), 10),
 		"oauth_version"          : "1.0",
 	}
 }
 
+// Generates a nonce value using the random package and the
+// current Unix time.
+func nonce() int64 {
+	return rand.New(rand.NewSource(now())).Int63()
+}
+
+// Gets the current time
+func now() int64 {
+	return time.Now().Unix()
+	//return time.Now().UTC().Unix()
+}
+
 // Generates an HMAC Signature for an OAuth1.0a request.
-func /*(self *OAuth1Mixin)*/ sign(message, key string) string {
+func sign(message, key string) string {
 	hashfun := hmac.New(sha1.New, []byte(key))
 	hashfun.Write([]byte(message))
 	rawsignature := hashfun.Sum(nil)
@@ -289,8 +286,7 @@ func /*(self *OAuth1Mixin)*/ sign(message, key string) string {
 
 
 
-
-func /*(self *OAuth1Mixin)*/ requestString(method string, uri string, params map[string]string) string {
+func requestString(method string, uri string, params map[string]string) string {
 	
 	// loop through params, add keys to map
 	var keys []string
@@ -317,7 +313,7 @@ func /*(self *OAuth1Mixin)*/ requestString(method string, uri string, params map
 	return result
 }
 
-func /*(self *OAuth1Mixin)*/ authorizationString(params map[string]string) string {
+func authorizationString(params map[string]string) string {
 	
 	// loop through params, add keys to map
 	var keys []string
@@ -329,54 +325,13 @@ func /*(self *OAuth1Mixin)*/ authorizationString(params map[string]string) strin
 	sort.StringSlice(keys).Sort()
 
 	// create the signed string
-	result := "OAuth "
+	var str string
 
 	// loop through sorted params and append to the string
-	for pos, key := range keys {
-		if pos > 0 {
-			result += ","
-		}
-		//result += key + "=\"" + url.QueryEscape(params[key]) + "\""
-		result += key + "=\"" + params[key] + "\""
+	for i, key := range keys {
+		if i > 0 { str += "," }
+		str += fmt.Sprintf("%s=%q", key, url.QueryEscape(params[key]))//key + "=\"" + params[key] + "\""
 	}
 
-	return result
+	return fmt.Sprintf("OAuth %s", str)
 }
-
-/*
-// TODO REMOVE
-func url.QueryEscape(s string) string {
-	t := make([]byte, 0, 3*len(s))
-	for i := 0; i < len(s); i++ {
-		c := s[i]
-		if isEscapable(c) {
-			t = append(t, '%')
-			t = append(t, "0123456789ABCDEF"[c>>4])
-			t = append(t, "0123456789ABCDEF"[c&15])
-		} else {
-			t = append(t, s[i])
-		}
-	}
-	return string(t)
-}
-
-// TODO REMOVE
-func isEscapable(b byte) bool {
-	return !('A' <= b && b <= 'Z' || 'a' <= b && b <= 'z' || '0' <= b && b <= '9' || b == '-' || b == '.' || b == '_' || b == '~')
-
-}
-*/
-/*
-	// Convert the parameters to a string array
-	var authHeaderArray []string
-	for key, val := range authHeaders {
-		authHeaderStr := fmt.Sprintf(`%s="%s"`, key, val) 
-		authHeaderArray = append(authHeaderArray, authHeaderStr)
-	}
-
-	authHeader := strings.Join(authHeaderArray, ",")
-
-*/
-
-
-
