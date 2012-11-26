@@ -11,7 +11,7 @@ import (
 type Token interface {
 	Token()  string // Gets the oauth_token value.
 	Secret() string // Gets the oauth_token_secret.
-	Encode()    string // Encode encodes the token into “URL encoded” form.
+	Encode() string // Encode encodes the token into “URL encoded” form.
 }
 
 // AccessToken represents a value used by the Consumer to gain access
@@ -21,6 +21,16 @@ type AccessToken struct {
 	token  string            // the oauth_token value
 	secret string            // the oauth_token_secret value
 	params map[string]string // additional params, as defined by the Provider.
+}
+
+// NewAccessToken returns a new instance of AccessToken with the specified
+// token, secret and additional parameters.
+func NewAccessToken(token, secret string, params map[string]string) *AccessToken {
+	return &AccessToken {
+		token  : token,
+		secret : secret,
+		params : params,
+	}
 }
 
 // ParseAccessToken parses the URL-encoded query string from the Reader
