@@ -75,19 +75,21 @@ func NewGithubProvider(clientId, clientSecret string) *GithubProvider {
 // screen.
 func (self *GithubProvider) Redirect(w http.ResponseWriter, r *http.Request) {
 	params := make(url.Values)
-	params.Add("scope", "users")
+	params.Add("scope", "users,repo")
 	self.OAuth2Mixin.AuthorizeRedirect(w, r, self.AuthorizeUrl, params)
 }
 
 // GetAuthenticatedUser will retrieve the Authentication User from the
 // http.Request object.
-func (self *GithubProvider) GetAuthenticatedUser(r *http.Request) (User, error) {
+func (self *GithubProvider) GetAuthenticatedUser(w http.ResponseWriter, r *http.Request) (User, error) {
 	// Get the OAuth2 Access Token
 	token, err := self.GetAccessToken(r)
 	if err != nil {
 		return nil, err
 	}
-
+//println("Token         : "+ token)
+//println("ClientId      : "+ self.ClientId)
+//println("ClientSecret  : "+ self.ClientSecret)
 	// Use the Access Token to retrieve the user's information
 	user := GitHubUser{}
 	err = self.OAuth2Mixin.GetAuthenticatedUser(self.UserResourceUrl, token, nil, &user)

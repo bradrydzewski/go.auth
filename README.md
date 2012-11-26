@@ -13,6 +13,7 @@ The following auth providers are supported:
 * Google OAuth 2.0 [demo](https://github.com/bradrydzewski/go.auth/tree/master/examples/google)
 * Google OpenId 2.0 [demo](https://github.com/bradrydzewski/go.auth/tree/master/examples/openid)
 * Twitter OAuth 1.0a [demo](https://github.com/bradrydzewski/go.auth/tree/master/examples/twitter)
+* Bitbucket OAuth 1.0a [demo](https://github.com/bradrydzewski/go.auth/tree/master/examples/bitbucket)
 
 See the [multi-provider](https://github.com/bradrydzewski/go.auth/tree/master/examples/multiple) demo application to provide your users multiple login options.
 

@@ -24,37 +24,27 @@ func (u *BitbucketUser) Org()      string { return "" }
 // See https://confluence.atlassian.com/display/BITBUCKET/OAuth+on+Bitbucket
 type BitbucketProvider struct {
 	OAuth1Mixin
-	UserResourceUrl string
 }
 
 // NewBitbucketProvider allocates and returns a new BitbucketProvider.
 func NewBitbucketProvider(key, secret, callback string) *BitbucketProvider {
 	bb := BitbucketProvider{}
-	bb.AuthorizeUrl = "https://bitbucket.org/!api/1.0/oauth/authenticate"
-	bb.RequestToken = "https://bitbucket.org/api/1.0/oauth/request_token/"
-	bb.AccessToken = "https://bitbucket.org/api/1.0/oauth/access_token/"
-	bb.UserResourceUrl = "https://api.bitbucket.org/1.0/user"
+	bb.AuthorizationURL = "https://bitbucket.org/!api/1.0/oauth/authenticate"
+	bb.RequestTokenURL = "https://bitbucket.org/api/1.0/oauth/request_token/"
+	bb.AccessTokenURL = "https://bitbucket.org/api/1.0/oauth/access_token/"
 
-	bb.CallbackUrl = callback
+	bb.CallbackURL = callback
 	bb.ConsumerKey = key
 	bb.ConsumerSecret = secret
 	return &bb
 }
 
-// Redirect will do an http.Redirect, sending the user to the Bitbucket login
-// screen.
-func (self *BitbucketProvider) Redirect(w http.ResponseWriter, r *http.Request) {
-	//params := make(url.Values)
-	//params.Add("scope", "users,repo")
-	self.OAuth1Mixin.AuthorizeRedirect(w, r, self.AuthorizeUrl)
-}
-
 // GetAuthenticatedUser will upgrade the oauth_token to an access token, and
 // invoke the appropriate Bitbucket REST API call to get the User's information.
-func (self *BitbucketProvider) GetAuthenticatedUser(r *http.Request) (User, error) {
+func (self *BitbucketProvider) GetAuthenticatedUser(w http.ResponseWriter, r *http.Request) (User, error) {
 
 	// upgrade the oauth_token to an access token
-	token, secret, err := self.OAuth1Mixin.AuthorizeToken(r)
+	token, err := self.OAuth1Mixin.AuthorizeToken(w, r)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +55,7 @@ func (self *BitbucketProvider) GetAuthenticatedUser(r *http.Request) (User, erro
 	}{}
 
 	// get the Bitbucket User details
-	if err := self.OAuth1Mixin.GetAuthenticatedUser(self.UserResourceUrl, token, secret, &wrapper); err != nil {
+	if err := self.OAuth1Mixin.GetAuthenticatedUser("https://api.bitbucket.org/1.0/user", token, &wrapper); err != nil {
 		return nil, err
 	}
 

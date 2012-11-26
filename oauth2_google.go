@@ -69,7 +69,7 @@ func (self *GoogleProvider) Redirect(w http.ResponseWriter, r *http.Request) {
 
 // GetAuthenticatedUser will retrieve the Authentication User from the
 // http.Request object.
-func (self *GoogleProvider) GetAuthenticatedUser(r *http.Request) (User, error) {
+func (self *GoogleProvider) GetAuthenticatedUser(w http.ResponseWriter, r *http.Request) (User, error) {
 	// Get the OAuth2 Access Token
 	token, err := self.GetAccessToken(r)
 	if err != nil {

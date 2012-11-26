@@ -73,7 +73,7 @@ func (self *OpenIdProvider) Redirect(w http.ResponseWriter, r *http.Request) {
 // GetAuthenticatedUser will retrieve the User information from the URL
 // query parameters, per the OpenID specification. If the authentication failed,
 // the function will return an error.
-func (self *OpenIdProvider) GetAuthenticatedUser(r *http.Request) (User, error) {
+func (self *OpenIdProvider) GetAuthenticatedUser(w http.ResponseWriter, r *http.Request) (User, error) {
 
 	// Parse the url parameters
 	params := r.URL.Query()

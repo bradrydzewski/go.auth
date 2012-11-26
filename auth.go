@@ -63,7 +63,7 @@ func (self *AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the authenticated user Id
-	user, err := self.provider.GetAuthenticatedUser(r)
+	user, err := self.provider.GetAuthenticatedUser(w, r)
 	if err != nil {
 		// If there was a problem, invoke failure
 		if self.Failure == nil {
@@ -110,7 +110,7 @@ type AuthProvider interface {
 
 	// GetAuthenticatedUser will retrieve the authenticated User from the
 	// http.Request object.
-	GetAuthenticatedUser(r *http.Request) (User, error)
+	GetAuthenticatedUser(w http.ResponseWriter, r *http.Request) (User, error)
 }
 
 // AuthConfig holds configuration parameters used when authenticating a user and
