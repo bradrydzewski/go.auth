@@ -48,7 +48,6 @@ Thumbs.db
 
 # Other #
 #########
-/examples/github/github.sh
-/examples/google/google.sh
-/examples/multiple/multiple.sh
-/examples/twitter/twitter.sh
+
+/*/examples/*/run.sh
+/examples/*/*.sh
