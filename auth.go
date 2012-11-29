@@ -14,7 +14,7 @@ type AuthHandler struct {
 
 	// Success specifies a function to execute upon successful authentication.
 	// If Success is nil, the DefaultSuccess func is used.
-	Success func(w http.ResponseWriter, r *http.Request, user User)
+	Success func(w http.ResponseWriter, r *http.Request, u User, t Token)
 
 	// Failure specifies a function to execute upon failing authentication.
 	// If Failure is nil, the DefaultFailure func is used.
@@ -63,7 +63,7 @@ func (self *AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the authenticated user Id
-	user, err := self.provider.GetAuthenticatedUser(w, r)
+	u, t, err := self.provider.GetAuthenticatedUser(w, r)
 	if err != nil {
 		// If there was a problem, invoke failure
 		if self.Failure == nil {
@@ -76,15 +76,15 @@ func (self *AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Invoke the success function
 	if self.Success == nil {
-		DefaultSuccess(w, r, user)
+		DefaultSuccess(w, r, u, t)
 	} else {
-		self.Success(w, r, user)
+		self.Success(w, r, u, t)
 	}
 }
 
 // DefaultSuccess will redirect a User, using an http.Redirect, to the
 // Config.LoginSuccessRedirect url upon successful authentication.
-var DefaultSuccess = func(w http.ResponseWriter, r *http.Request, u User) {
+var DefaultSuccess = func(w http.ResponseWriter, r *http.Request, u User, t Token) {
 	SetUserCookie(w, r, u)
 	http.Redirect(w, r, Config.LoginSuccessRedirect, http.StatusSeeOther)
 }
@@ -110,7 +110,7 @@ type AuthProvider interface {
 
 	// GetAuthenticatedUser will retrieve the authenticated User from the
 	// http.Request object.
-	GetAuthenticatedUser(w http.ResponseWriter, r *http.Request) (User, error)
+	GetAuthenticatedUser(w http.ResponseWriter, r *http.Request) (User, Token, error)
 }
 
 // AuthConfig holds configuration parameters used when authenticating a user and
@@ -137,6 +137,13 @@ var Config = &AuthConfig{
 	CookieHttpOnly:        true,
 	LoginRedirect:         "/auth/login",
 	LoginSuccessRedirect:  "/",
+}
+
+// Passes back the OAuth Token. This will likely be the oauth2.Token or the
+// oauth1.AccessToken... will need to cast to the appropriate value if you
+// need specific fields (for now).
+type Token interface {
+	Token() string
 }
 
 // A User is returned by the AuthProvider upon success authentication.

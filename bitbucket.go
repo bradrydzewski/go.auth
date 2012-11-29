@@ -41,12 +41,12 @@ func NewBitbucketProvider(key, secret, callback string) *BitbucketProvider {
 
 // GetAuthenticatedUser will upgrade the oauth_token to an access token, and
 // invoke the appropriate Bitbucket REST API call to get the User's information.
-func (self *BitbucketProvider) GetAuthenticatedUser(w http.ResponseWriter, r *http.Request) (User, error) {
+func (self *BitbucketProvider) GetAuthenticatedUser(w http.ResponseWriter, r *http.Request) (User, Token, error) {
 
 	// upgrade the oauth_token to an access token
 	token, err := self.OAuth1Mixin.AuthorizeToken(w, r)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// bitbuckets user object comes wrapped in a composite object.
@@ -56,13 +56,13 @@ func (self *BitbucketProvider) GetAuthenticatedUser(w http.ResponseWriter, r *ht
 
 	// get the Bitbucket User details
 	if err := self.OAuth1Mixin.GetAuthenticatedUser("https://api.bitbucket.org/1.0/user", token, &wrapper); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if wrapper.User == nil {
 		//TODO throw an exception
 	}
 
-	return wrapper.User, nil
+	return wrapper.User, token, nil
 	
 }

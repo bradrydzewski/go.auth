@@ -73,14 +73,14 @@ func (self *OpenIdProvider) Redirect(w http.ResponseWriter, r *http.Request) {
 // GetAuthenticatedUser will retrieve the User information from the URL
 // query parameters, per the OpenID specification. If the authentication failed,
 // the function will return an error.
-func (self *OpenIdProvider) GetAuthenticatedUser(w http.ResponseWriter, r *http.Request) (User, error) {
+func (self *OpenIdProvider) GetAuthenticatedUser(w http.ResponseWriter, r *http.Request) (User, Token, error) {
 
 	// Parse the url parameters
 	params := r.URL.Query()
 
 	// Check to see if the user successfully authenticated
 	if params.Get("openid.mode") == "cancel" {
-		return nil, ErrAuthDeclined
+		return nil, nil, ErrAuthDeclined
 	}
 
 	// Get the user details from the URL parameters
@@ -92,5 +92,5 @@ func (self *OpenIdProvider) GetAuthenticatedUser(w http.ResponseWriter, r *http.
 	// Return the User data
 	// TODO for now we are re-using the Google User
 	user := user{id: email, email: email, name: fullName, provider: self.endpoint }
-	return &user, nil
+	return &user, nil, nil
 }

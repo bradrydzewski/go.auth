@@ -72,16 +72,16 @@ func (self *OAuth1Mixin) AuthorizeToken(w http.ResponseWriter, r *http.Request) 
 		return nil, nil
 	}
 
-	//Delete the request Token ...don't need it anymore
-	cookie.Value = "deleted"
-	cookie.MaxAge = -1
-	http.SetCookie(w, cookie)
-
 	//Parse the persisted request token
 	requestToken, err := oauth1.ParseRequestTokenStr(cookie.Value)
 	if err != nil {
 		return nil, err
 	}
+
+	//Delete the request Token ...don't need it anymore
+	cookie.Value = "deleted"
+	cookie.MaxAge = -1
+	http.SetCookie(w, cookie)
 
 	//Parse the verification code from the Redirect URL
 	verifier := r.URL.Query().Get("oauth_verifier")

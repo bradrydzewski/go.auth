@@ -38,18 +38,18 @@ func NewTwitterProvider(key, secret, callback string) *TwitterProvider {
 
 // GetAuthenticatedUser will upgrade the oauth_token to an access token, and
 // invoke the appropriate Twitter REST API call to get the User's information.
-func (self *TwitterProvider) GetAuthenticatedUser(w http.ResponseWriter, r *http.Request) (User, error) {
+func (self *TwitterProvider) GetAuthenticatedUser(w http.ResponseWriter, r *http.Request) (User, Token, error) {
 
 	// upgrade the oauth_token to an access token
 	token, err := self.OAuth1Mixin.AuthorizeToken(w, r)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// get the Bitbucket User details
 	user := TwitterUser{}
 	if err := self.OAuth1Mixin.GetAuthenticatedUser("https://api.twitter.com/1.1/account/settings.json", token, &user); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return &user, err
+	return &user, token, err
 }

@@ -140,6 +140,10 @@ type Token struct {
 	Scope string
 }
 
+func (t Token) Token() string {
+	return t.AccessToken
+}
+
 // Error represents a failed request to the OAuth2.0 Authorization
 // or Resource server.
 type Error struct {
