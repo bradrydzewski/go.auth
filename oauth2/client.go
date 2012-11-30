@@ -42,8 +42,14 @@ func (c *Client) AuthorizeRedirect(scope, state string) string {
 	// add required parameters
 	params := make(url.Values)
 	params.Add("response_type", ResponseTypeCode)
-	params.Set("redirect_uri", c.RedirectURL)
+	//params.Set("redirect_uri", c.RedirectURL)
 	params.Set("client_id", c.ClientId)
+
+	// add optional redirect param
+	// NOTE: this is optional for some providers, but not for others
+	if len(c.RedirectURL) > 0 {
+		params.Set("redirect_uri", c.RedirectURL)
+	}
 
 	// add optional scope param
 	if len(scope) > 0 {
@@ -55,6 +61,13 @@ func (c *Client) AuthorizeRedirect(scope, state string) string {
 		params.Set("state", state)
 	}
 
+	// HACK: for google we must add access_type=offline in order
+	//       to obtain a refresh token
+	if strings.HasPrefix(c.AuthorizationURL, "https://accounts.google.com") {
+		params.Set("access_type", "offline")
+		//params.Set("approval_prompt","force")
+	}
+
 	// generate the URL
 	endpoint, _ := url.Parse(c.AuthorizationURL)
 	endpoint.RawQuery = params.Encode()
@@ -63,7 +76,6 @@ func (c *Client) AuthorizeRedirect(scope, state string) string {
 	//      encoded and for some reason cause Google to fail the request.
 	//      So we will decode all plus signs to make the Google happy
 	endpoint.RawQuery = strings.Replace(endpoint.RawQuery, "%2B", "+", -1)
-
 	return endpoint.String()
 }
 

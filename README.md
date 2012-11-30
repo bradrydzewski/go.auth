@@ -6,6 +6,8 @@ an http authentication API for the Go programming language. Integrates with 3rd 
     
 Python's Tornado framework, specifically their auth module, was the main inspiration for this library.
 
+**THIS LIBRARY IS BEING ACTIVELY DEVELOPED. THE API IS CHANGING WEEKLY.**
+
 ## Providers
 The following auth providers are supported:
 
