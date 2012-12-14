@@ -184,11 +184,13 @@ func (c *Consumer) SignParams(req *http.Request, token Token, params map[string]
 // -----------------------------------------------------------------------------
 // Private Helper Functions
 
+// Nonce generator, seeded with current time
+var nonceGenerator = rand.New(rand.NewSource(time.Now().Unix()))
+
 // Nonce generates a random string. Nonce's are uniquely generated
 // for each request.
 func nonce() string {
-	return strconv.FormatInt(
-			rand.New(rand.NewSource(time.Now().Unix())).Int63(), 10)
+	return strconv.FormatInt(nonceGenerator.Int63(), 10)
 }
 
 // Timestamp generates a timestamp, expressed in the number of seconds
