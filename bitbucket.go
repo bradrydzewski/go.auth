@@ -12,7 +12,7 @@ type BitbucketUser struct {
 }
 
 func (u *BitbucketUser) Id()       string { return u.UserId }
-func (u *BitbucketUser) Provider() string { return "bitbucket.com" }
+func (u *BitbucketUser) Provider() string { return "bitbucket.org" }
 func (u *BitbucketUser) Name()     string { return u.UserId }
 func (u *BitbucketUser) Email()    string { return "" }
 func (u *BitbucketUser) Link()     string { return "https://bitbucket.org/"+u.UserId }
