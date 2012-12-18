@@ -6,9 +6,15 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"math/rand"
+	"time"
+	"strconv"
 
 	"github.com/bradrydzewski/go.auth/oauth2"
 )
+
+// State generator, seeded with current time
+var stateGenerator = rand.New(rand.NewSource(time.Now().Unix()))
 
 // Abstract implementation of OAuth2 for user authentication.
 type OAuth2Mixin struct {
@@ -24,7 +30,8 @@ func (self *OAuth2Mixin) RedirectRequired(r *http.Request) bool {
 
 // Redirects the User to the Login Screen
 func (self *OAuth2Mixin) AuthorizeRedirect(w http.ResponseWriter, r *http.Request, scope string) {
-	url := self.Client.AuthorizeRedirect(scope, "")
+	state := strconv.FormatInt(stateGenerator.Int63(), 10)
+	url := self.Client.AuthorizeRedirect(scope, state)
 	http.Redirect(w, r, url, http.StatusSeeOther)
 }
 

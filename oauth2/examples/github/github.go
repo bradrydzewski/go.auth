@@ -36,7 +36,7 @@ func main() {
 
 	// Generate a URL that the user must visit to authorize this command-line
 	// application read-only access to the user's Github profile data
-	scope := "users"       // grant access to the `users` api
+	scope := "user"       // grant access to the `users` api
 	state := "FqB4EbagQ2o" // random string to protect against CSRF attacks
 	url := client.AuthorizeRedirect(scope, state)
 
