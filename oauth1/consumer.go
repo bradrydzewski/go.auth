@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -154,6 +155,19 @@ func (c *Consumer) SignParams(req *http.Request, token Token, params map[string]
 	params["oauth_timestamp"]        = timestamp()
 	params["oauth_version"]          = "1.0"
 
+	// we'll need to sign any form values?
+	if req.Form != nil {
+		for k, _ := range req.Form {
+			params[k] = req.Form.Get(k)
+		}
+	}
+
+	// we'll also need to sign any URL parameter 
+	queryParams := req.URL.Query()
+	for k, _ := range queryParams {
+		params[k] = queryParams.Get(k)
+	}
+
 	var tokenSecret string
 	if token != nil {
 		tokenSecret = token.Secret()
@@ -161,9 +175,19 @@ func (c *Consumer) SignParams(req *http.Request, token Token, params map[string]
 	}
 
 	// create the oauth signature
-	key := url.QueryEscape(c.ConsumerSecret) + "&" + url.QueryEscape(tokenSecret)
+	key := escape(c.ConsumerSecret) + "&" + escape(tokenSecret)
 	base := requestString(req.Method, req.URL.String(), params)
 	params["oauth_signature"] = sign(base, key)
+
+
+	//HACK: we were previously including params in the Authorization
+	//      header that shouldn't be. so for now, we'll filter 
+	//authStringParams := map[string]string{}
+	//for k,v := range params {
+	//	if strings.HasPrefix(k, "oauth_") {
+	//		authStringParams[k]=v
+	//	}
+	//}
 
 	// ensure the http.Request's Header is not nil
 	if req.Header == nil {
@@ -171,10 +195,11 @@ func (c *Consumer) SignParams(req *http.Request, token Token, params map[string]
 	}
 	
 	// add the authorization header string
-	req.Header.Add("Authorization", authorizationString(params))
+	req.Header.Add("Authorization", authorizationString(params))//params))
 
-	// ensure the appropriate content-type is set for POST
-	if req.Method == "POST" {
+	// ensure the appropriate content-type is set for POST,
+	// assuming the field is not populated
+	if req.Method == "POST" && len(req.Header.Get("Content-Type")) == 0 {
 		req.Header.Set("Content-Type","application/x-www-form-urlencoded")
 	}
 
@@ -190,12 +215,14 @@ var nonceGenerator = rand.New(rand.NewSource(time.Now().Unix()))
 // Nonce generates a random string. Nonce's are uniquely generated
 // for each request.
 func nonce() string {
+	//return strconv.FormatInt(5786940697266324430,10)//TODO 
 	return strconv.FormatInt(nonceGenerator.Int63(), 10)
 }
 
 // Timestamp generates a timestamp, expressed in the number of seconds
 // since January 1, 1970 00:00:00 GMT.
 func timestamp() string {
+	//return strconv.FormatInt(1358055923,10)
 	return strconv.FormatInt(time.Now().Unix(), 10)
 }
 
@@ -206,6 +233,7 @@ func sign(message, key string) string {
 	rawsignature := hashfun.Sum(nil)
 	base64signature := make([]byte, base64.StdEncoding.EncodedLen(len(rawsignature)))
 	base64.StdEncoding.Encode(base64signature, rawsignature)
+
 	return string(base64signature)
 }
 
@@ -232,16 +260,17 @@ func requestString(method string, uri string, params map[string]string) string {
 	sort.StringSlice(keys).Sort()
 
 	// create the signed string
-	result := method + "&" + url.QueryEscape(uri)
+	result := method + "&" + escape(uri)
 
 	// loop through sorted params and append to the string
 	for pos, key := range keys {
 		if pos == 0 {
 			result += "&"
 		} else {
-			result += url.QueryEscape("&")
+			result += escape("&")
 		}
-		result += url.QueryEscape(fmt.Sprintf("%s=%s", key, url.QueryEscape(params[key])))
+
+		result += escape(fmt.Sprintf("%s=%s", key, escape(params[key])))
 	}
 
 	return result
@@ -260,13 +289,46 @@ func authorizationString(params map[string]string) string {
 
 	// create the signed string
 	var str string
+	var cnt = 0
 
 	// loop through sorted params and append to the string
-	for i, key := range keys {
-		if i > 0 { str += "," }
-		str += fmt.Sprintf("%s=%q", key, url.QueryEscape(params[key]))//key + "=\"" + params[key] + "\""
+	for _, key := range keys {
+
+		// we previously encoded all params (url params, form data & oauth params)
+		// but for the authorization string we should only encode the oauth params
+		if !strings.HasPrefix(key, "oauth_") {
+			continue
+		}
+
+		if cnt > 0 {
+			str += ","
+		}
+
+		str += fmt.Sprintf("%s=%q", key, escape(params[key]))
+		cnt++
 	}
 
 	return fmt.Sprintf("OAuth %s", str)
+}
+
+
+func escape(s string) string {
+	t := make([]byte, 0, 3*len(s))
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if isEscapable(c) {
+			t = append(t, '%')
+			t = append(t, "0123456789ABCDEF"[c>>4])
+			t = append(t, "0123456789ABCDEF"[c&15])
+		} else {
+			t = append(t, s[i])
+		}
+	}
+	return string(t)
+}
+
+func isEscapable(b byte) bool {
+	return !('A' <= b && b <= 'Z' || 'a' <= b && b <= 'z' || '0' <= b && b <= '9' || b == '-' || b == '.' || b == '_' || b == '~')
+
 }
 
