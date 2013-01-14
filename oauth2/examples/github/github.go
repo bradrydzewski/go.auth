@@ -36,7 +36,7 @@ func main() {
 
 	// Generate a URL that the user must visit to authorize this command-line
 	// application read-only access to the user's Github profile data
-	scope := "user"       // grant access to the `users` api
+	scope := "user,repo,user:email" // grant access to the `users` api
 	state := "FqB4EbagQ2o" // random string to protect against CSRF attacks
 	url := client.AuthorizeRedirect(scope, state)
 
@@ -54,6 +54,8 @@ func main() {
 	accessToken, err := client.GrantToken(verifier)
 	if err != nil {
 		log.Fatal(err)
+	} else {
+		fmt.Println("Access Token", accessToken)
 	}
 
 	// create the http.Request that will access a restricted resource
