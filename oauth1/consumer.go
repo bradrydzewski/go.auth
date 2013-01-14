@@ -199,7 +199,7 @@ func (c *Consumer) SignParams(req *http.Request, token Token, params map[string]
 
 	// ensure the appropriate content-type is set for POST,
 	// assuming the field is not populated
-	if req.Method == "POST" && len(req.Header.Get("Content-Type")) == 0 {
+	if (req.Method == "POST" || req.Method == "PUT") && len(req.Header.Get("Content-Type")) == 0 {
 		req.Header.Set("Content-Type","application/x-www-form-urlencoded")
 	}
 
@@ -215,14 +215,12 @@ var nonceGenerator = rand.New(rand.NewSource(time.Now().Unix()))
 // Nonce generates a random string. Nonce's are uniquely generated
 // for each request.
 func nonce() string {
-	//return strconv.FormatInt(5786940697266324430,10)//TODO 
 	return strconv.FormatInt(nonceGenerator.Int63(), 10)
 }
 
 // Timestamp generates a timestamp, expressed in the number of seconds
 // since January 1, 1970 00:00:00 GMT.
 func timestamp() string {
-	//return strconv.FormatInt(1358055923,10)
 	return strconv.FormatInt(time.Now().Unix(), 10)
 }
 
