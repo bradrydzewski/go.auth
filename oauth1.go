@@ -17,7 +17,9 @@ type OAuth1Mixin struct {
 // Redirect will do an http.Redirect, sending the user to the Provider's
 // login screen.
 func (self *OAuth1Mixin) Redirect(w http.ResponseWriter, r *http.Request) {
-	self.AuthorizeRedirect(w, r, self.Consumer.AuthorizationURL)
+	if err := self.AuthorizeRedirect(w, r, self.Consumer.AuthorizationURL); err != nil {
+		println("Error redirecting to authorization endpoint: " + err.Error())
+	}
 }
 
 // RedirectRequired returns a boolean value indicating if the request should
@@ -54,6 +56,7 @@ func (self *OAuth1Mixin) AuthorizeRedirect(w http.ResponseWriter, r *http.Reques
 	cookie.Path = "/"
 	cookie.Domain = r.URL.Host
 	cookie.HttpOnly = true
+	cookie.Secure = Config.CookieSecure
 	cookie.Value = token.Encode()
 	http.SetCookie(w, &cookie)
 
@@ -79,9 +82,7 @@ func (self *OAuth1Mixin) AuthorizeToken(w http.ResponseWriter, r *http.Request) 
 	}
 
 	//Delete the request Token ...don't need it anymore
-	cookie.Value = "deleted"
-	cookie.MaxAge = -1
-	http.SetCookie(w, cookie)
+	DeleteUserCookieName(w,r,"_token")
 
 	//Parse the verification code from the Redirect URL
 	verifier := r.URL.Query().Get("oauth_verifier")
