@@ -60,7 +60,7 @@ func Private(w http.ResponseWriter, r *http.Request) {
 ```
 
 If you want additional user data you must implement our custom handler, and wrap
-it with the `auth.SecureUserFunc`. This adds an additional `User` parameter to
+it with the `auth.SecureUser`. This adds an additional `User` parameter to
 your method signature that provides the full set of available user data:
 
 ```go
@@ -72,7 +72,7 @@ func Private(w http.ResponseWriter, r *http.Request, u auth.User) {
 	...
 }
 
-http.HandleFunc("/foo", auth.SecureUserFunc(Private))
+http.HandleFunc("/foo", auth.SecureUser(Private))
 ```
 
 # Configuration
