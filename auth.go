@@ -24,7 +24,7 @@ type AuthHandler struct {
 // New allocates and returns a new AuthHandler, using the specified
 // AuthProvider.
 func New(p AuthProvider) *AuthHandler {
-	return &AuthHandler{ provider : p }
+	return &AuthHandler{provider: p}
 }
 
 // Google allocates and returns a new AuthHandler, using the GoogleProvider.
@@ -116,27 +116,26 @@ type AuthProvider interface {
 // AuthConfig holds configuration parameters used when authenticating a user and
 // creating a secure cookie user session.
 type AuthConfig struct {
-	CookieSecret          []byte
-	CookieName            string
-	CookieExp             time.Duration
-	CookieMaxAge          int
-	CookieSecure          bool
-	CookieHttpOnly        bool
-	LoginRedirect         string
-	LoginSuccessRedirect  string
-	
+	CookieSecret         []byte
+	CookieName           string
+	CookieExp            time.Duration
+	CookieMaxAge         int
+	CookieSecure         bool
+	CookieHttpOnly       bool
+	LoginRedirect        string
+	LoginSuccessRedirect string
 }
 
 // Config is the default implementation of Config, and is used by
 // DetaultAuthCallback, Secure, and SecureFunc.
 var Config = &AuthConfig{
-	CookieName:            "_sess",
-	CookieExp:             time.Hour * 24 * 14,
-	CookieMaxAge:          0,
-	CookieSecure:          true,
-	CookieHttpOnly:        true,
-	LoginRedirect:         "/auth/login",
-	LoginSuccessRedirect:  "/",
+	CookieName:           "_sess",
+	CookieExp:            time.Hour * 24 * 14,
+	CookieMaxAge:         0,
+	CookieSecure:         true,
+	CookieHttpOnly:       true,
+	LoginRedirect:        "/auth/login",
+	LoginSuccessRedirect: "/",
 }
 
 // Passes back the OAuth Token. This will likely be the oauth2.Token or the
@@ -148,13 +147,13 @@ type Token interface {
 
 // A User is returned by the AuthProvider upon success authentication.
 type User interface {
-	Id()       string // Unique identifier of the user
+	Id() string       // Unique identifier of the user
 	Provider() string // Name of the Authentication Provider (ie google, github)
-	Name()     string // Name of the User (ie lastname, firstname)
-	Email()    string // Email Address of the User
-	Org()      string // Company or Organization the User belongs to
-	Picture()  string // URL of the User's Profile picture
-	Link()     string // URL of the User's Profile page
+	Name() string     // Name of the User (ie lastname, firstname)
+	Email() string    // Email Address of the User
+	Org() string      // Company or Organization the User belongs to
+	Picture() string  // URL of the User's Profile picture
+	Link() string     // URL of the User's Profile page
 }
 
 // An implementation of User, for internal package use only.
@@ -213,7 +212,7 @@ func SecureUser(handler SecureHandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		//else, invoke the handler and provide the suer
+		//else, invoke the handler and provide the user
 		handler(w, r, user)
 	}
 }
@@ -221,7 +220,7 @@ func SecureUser(handler SecureHandlerFunc) http.HandlerFunc {
 // SecureGuest will attempt to retireve authenticated User details from
 // the current session when invoking the auth.SecureHandlerFunc function. If no
 // User details are found the handler will allow the user to proceed as a guest,
-// which means the User details will be nil. 
+// which means the User details will be nil.
 //
 // This function is intended for pages that are Publicly visible, but display
 // additional details for authenticated users.
@@ -235,7 +234,7 @@ func SecureGuest(handler SecureHandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		//else, invoke the handler and provide the suer
+		//else, invoke the handler and provide the user
 		handler(w, r, user)
 	}
 }
