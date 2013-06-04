@@ -67,7 +67,7 @@ func NewGithubProvider(clientId, clientSecret string) *GithubProvider {
 // Redirect will do an http.Redirect, sending the user to the Github login
 // screen.
 func (self *GithubProvider) Redirect(w http.ResponseWriter, r *http.Request) {
-	const scope = "user,repo"
+	const scope = "user,repo" //,user:email
 	self.OAuth2Mixin.AuthorizeRedirect(w, r, scope)
 }
 

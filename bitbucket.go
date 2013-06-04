@@ -29,7 +29,10 @@ type BitbucketProvider struct {
 // NewBitbucketProvider allocates and returns a new BitbucketProvider.
 func NewBitbucketProvider(key, secret, callback string) *BitbucketProvider {
 	bb := BitbucketProvider{}
-	bb.AuthorizationURL = "https://bitbucket.org/!api/1.0/oauth/authenticate"
+	//bb.AuthorizationURL = "https://bitbucket.org/!api/1.0/oauth/authenticate"
+	//bb.RequestTokenURL = "https://bitbucket.org/api/1.0/oauth/request_token/"
+	//bb.AccessTokenURL = "https://bitbucket.org/api/1.0/oauth/access_token/"
+	bb.AuthorizationURL = "https://bitbucket.org/api/1.0/oauth/authenticate/"
 	bb.RequestTokenURL = "https://bitbucket.org/api/1.0/oauth/request_token/"
 	bb.AccessTokenURL = "https://bitbucket.org/api/1.0/oauth/access_token/"
 
