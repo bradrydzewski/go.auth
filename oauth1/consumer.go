@@ -60,7 +60,7 @@ func (c *Consumer) RequestToken() (*RequestToken, error) {
 	requestTokenUrl, _ := url.Parse(c.RequestTokenURL)
 	req := http.Request{
 		URL:        requestTokenUrl,
-		Method:     "GET",
+		Method:     "POST",
 		ProtoMajor: 1,
 		ProtoMinor: 1,
 		Close:      true,
@@ -94,10 +94,17 @@ func (c *Consumer) AuthorizeRedirect(t *RequestToken) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	params := make(url.Values)
 	params.Add("oauth_token", t.token)
 	redirect.RawQuery = params.Encode()
-	return redirect.String(), nil
+
+	u := redirect.String()
+	if strings.HasPrefix(u, "https://bitbucket.org/%21api/") {
+		u = strings.Replace(u, "/%21api/", "/!api/", -1)
+	}
+
+	return u, nil
 }
 
 func (c *Consumer) AuthorizeToken(t *RequestToken, verifier string) (*AccessToken, error) {
@@ -178,7 +185,6 @@ func (c *Consumer) SignParams(req *http.Request, token Token, params map[string]
 	key := escape(c.ConsumerSecret) + "&" + escape(tokenSecret)
 	base := requestString(req.Method, req.URL.String(), params)
 	params["oauth_signature"] = sign(base, key)
-
 
 	//HACK: we were previously including params in the Authorization
 	//      header that shouldn't be. so for now, we'll filter 
