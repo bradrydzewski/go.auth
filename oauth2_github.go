@@ -52,23 +52,29 @@ func (u *GitHubUser) Org() string {
 // See http://developer.github.com/v3/oauth/
 type GithubProvider struct {
 	OAuth2Mixin
+	Scope string
 }
 
 // NewGithubProvider allocates and returns a new GithubProvider.
-func NewGithubProvider(clientId, clientSecret string) *GithubProvider {
+func NewGithubProvider(clientId, clientSecret, scope string) *GithubProvider {
 	github := GithubProvider{}
 	github.AuthorizationURL = "https://github.com/login/oauth/authorize"
 	github.AccessTokenURL   = "https://github.com/login/oauth/access_token"
 	github.ClientId         = clientId
 	github.ClientSecret     = clientSecret
+	github.Scope            = scope
+
+	// default the Scope if not provided
+	if len(github.Scope) == 0 {
+		github.Scope = "user:email"
+	}
 	return &github
 }
 
 // Redirect will do an http.Redirect, sending the user to the Github login
 // screen.
 func (self *GithubProvider) Redirect(w http.ResponseWriter, r *http.Request) {
-	const scope = "user,repo" //,user:email
-	self.OAuth2Mixin.AuthorizeRedirect(w, r, scope)
+	self.OAuth2Mixin.AuthorizeRedirect(w, r, self.Scope)
 }
 
 // GetAuthenticatedUser will retrieve the Authentication User from the

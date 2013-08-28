@@ -33,8 +33,8 @@ func Google(client, secret, redirect string) *AuthHandler {
 }
 
 // Github allocates and returns a new AuthHandler, using the GithubProvider.
-func Github(client, secret string) *AuthHandler {
-	return New(NewGithubProvider(client, secret))
+func Github(client, secret, scope string) *AuthHandler {
+	return New(NewGithubProvider(client, secret, scope))
 }
 
 // OpenId allocates and returns a new AuthHandler, using the OpenIdProvider.
