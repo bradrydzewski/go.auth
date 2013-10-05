@@ -83,7 +83,7 @@ func main() {
 	auth.Config.CookieSecure = false
 
 	// login handler
-	githubHandler := auth.Github(*githubClientKey, *githubSecretKey)
+	githubHandler := auth.Github(*githubClientKey, *githubSecretKey,"")
 	http.Handle("/auth/login", githubHandler)
 
 	// logout handler
