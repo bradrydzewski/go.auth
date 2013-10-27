@@ -182,8 +182,10 @@ func (c *Consumer) SignParams(req *http.Request, token Token, params map[string]
 	}
 
 	// create the oauth signature
+	uri := strings.Split(req.URL.String(), "?")[0] //According to OAuth 1.0a we should include the absolute url (ref 9.1.2).
+	base := requestString(req.Method, uri, params)
+
 	key := escape(c.ConsumerSecret) + "&" + escape(tokenSecret)
-	base := requestString(req.Method, req.URL.String(), params)
 	params["oauth_signature"] = sign(base, key)
 
 	//HACK: we were previously including params in the Authorization
