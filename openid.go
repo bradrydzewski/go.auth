@@ -38,7 +38,7 @@ type OpenIdProvider struct {
 
 // NewOpenIdProvider allocates and returns a new OpenIdProvider.
 func NewOpenIdProvider(endpoint string) *OpenIdProvider {
-	return &OpenIdProvider{ endpoint }
+	return &OpenIdProvider{endpoint}
 }
 
 func (self *OpenIdProvider) RedirectRequired(r *http.Request) bool {
@@ -91,6 +91,6 @@ func (self *OpenIdProvider) GetAuthenticatedUser(w http.ResponseWriter, r *http.
 
 	// Return the User data
 	// TODO for now we are re-using the Google User
-	user := user{id: email, email: email, name: fullName, provider: self.endpoint }
+	user := user{id: email, email: email, name: fullName, provider: self.endpoint}
 	return &user, nil, nil
 }

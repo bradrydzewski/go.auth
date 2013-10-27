@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"flag"
-    "net/http"
+	"fmt"
 	"github.com/bradrydzewski/go.auth"
+	"net/http"
 )
 
 var homepage = `
@@ -69,7 +69,7 @@ func main() {
 	http.Handle("/auth/login", googHandler)
 
 	// logout handler
-    http.HandleFunc("/auth/logout", Logout)
+	http.HandleFunc("/auth/logout", Logout)
 
 	// public urls
 	http.HandleFunc("/", Public)
@@ -77,25 +77,9 @@ func main() {
 	// private, secured urls
 	http.HandleFunc("/private", auth.SecureFunc(Private))
 
-
 	println("google demo starting on port 8080")
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		fmt.Println(err)
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
