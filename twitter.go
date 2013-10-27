@@ -8,14 +8,13 @@ type TwitterUser struct {
 	UserId string `json:"screen_name"`
 }
 
-func (u *TwitterUser) Id()       string { return u.UserId }
+func (u *TwitterUser) Id() string       { return u.UserId }
 func (u *TwitterUser) Provider() string { return "twitter.com" }
-func (u *TwitterUser) Name()     string { return u.UserId }
-func (u *TwitterUser) Email()    string { return "" }
-func (u *TwitterUser) Link()     string { return "https://www.twitter.com/" + u.UserId }
-func (u *TwitterUser) Picture()  string { return "" }
-func (u *TwitterUser) Org()      string { return "" }
-
+func (u *TwitterUser) Name() string     { return u.UserId }
+func (u *TwitterUser) Email() string    { return "" }
+func (u *TwitterUser) Link() string     { return "https://www.twitter.com/" + u.UserId }
+func (u *TwitterUser) Picture() string  { return "" }
+func (u *TwitterUser) Org() string      { return "" }
 
 // TwitterProvider is an implementation of Twitters's Oauth1.0a protocol.
 // See https://dev.twitter.com/docs/auth/implementing-sign-twitter
@@ -28,7 +27,7 @@ func NewTwitterProvider(key, secret, callback string) *TwitterProvider {
 	twitter := TwitterProvider{}
 	twitter.AuthorizationURL = "https://api.twitter.com/oauth/authorize"
 	twitter.RequestTokenURL = "https://api.twitter.com/oauth/request_token"
-	twitter.AccessTokenURL =  "https://api.twitter.com/oauth/access_token"
+	twitter.AccessTokenURL = "https://api.twitter.com/oauth/access_token"
 
 	twitter.CallbackURL = callback
 	twitter.ConsumerKey = key

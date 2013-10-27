@@ -8,9 +8,9 @@ import (
 
 // Test the ability to parse a URL query string and unmarshal to a RequestToken.
 func TestParseRequestTokenStr(t *testing.T) {
-	oauth_token:="c0cf8793d39d46ab"
-	oauth_token_secret:="FMMj3w7plPEyhK8ZZ9lBsp"
-	oauth_callback_confirmed:=true
+	oauth_token := "c0cf8793d39d46ab"
+	oauth_token_secret := "FMMj3w7plPEyhK8ZZ9lBsp"
+	oauth_callback_confirmed := true
 
 	values := url.Values{}
 	values.Set("oauth_token", oauth_token)
@@ -31,10 +31,10 @@ func TestParseRequestTokenStr(t *testing.T) {
 
 // Test the ability to Encode a RequestToken to a URL query string.
 func TestEncodeRequestToken(t *testing.T) {
-	token := RequestToken {
-		token             : "c0cf8793d39d46ab",
-		secret            : "FMMj3w7plPEyhK8ZZ9lBsp",
-		callbackConfirmed : true,
+	token := RequestToken{
+		token:             "c0cf8793d39d46ab",
+		secret:            "FMMj3w7plPEyhK8ZZ9lBsp",
+		callbackConfirmed: true,
 	}
 
 	tokenStr := token.Encode()
@@ -46,9 +46,9 @@ func TestEncodeRequestToken(t *testing.T) {
 
 // Test the ability to parse a URL query string and unmarshal to an AccessToken.
 func TestEncodeAccessTokenStr(t *testing.T) {
-	oauth_token:="c0cf8793d39d46ab"
-	oauth_token_secret:="FMMj3w7plPEyhK8ZZ9lBsp"
-	oauth_callback_confirmed:=true
+	oauth_token := "c0cf8793d39d46ab"
+	oauth_token_secret := "FMMj3w7plPEyhK8ZZ9lBsp"
+	oauth_callback_confirmed := true
 
 	values := url.Values{}
 	values.Set("oauth_token", oauth_token)
@@ -69,10 +69,10 @@ func TestEncodeAccessTokenStr(t *testing.T) {
 
 // Test the ability to Encode an AccessToken to a URL query string.
 func TestEncodeAccessToken(t *testing.T) {
-	token := AccessToken {
-		token  : "c0cf8793d39d46ab",
-		secret : "FMMj3w7plPEyhK8ZZ9lBsp",
-		params : map[string]string{ "user" : "dr_van_nostrand" },
+	token := AccessToken{
+		token:  "c0cf8793d39d46ab",
+		secret: "FMMj3w7plPEyhK8ZZ9lBsp",
+		params: map[string]string{"user": "dr_van_nostrand"},
 	}
 
 	tokenStr := token.Encode()

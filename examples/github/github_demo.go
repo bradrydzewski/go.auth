@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"flag"
-    "net/http"
+	"fmt"
 	"github.com/bradrydzewski/go.auth"
+	"net/http"
 )
 
 var homepage = `
@@ -87,7 +87,7 @@ func main() {
 	http.Handle("/auth/login", githubHandler)
 
 	// logout handler
-    http.HandleFunc("/auth/logout", Logout)
+	http.HandleFunc("/auth/logout", Logout)
 
 	// public urls
 	http.HandleFunc("/", Public)
@@ -102,18 +102,3 @@ func main() {
 		fmt.Println(err)
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

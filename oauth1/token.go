@@ -9,7 +9,7 @@ import (
 )
 
 type Token interface {
-	Token()  string // Gets the oauth_token value.
+	Token() string  // Gets the oauth_token value.
 	Secret() string // Gets the oauth_token_secret.
 	Encode() string // Encode encodes the token into “URL encoded” form.
 }
@@ -26,10 +26,10 @@ type AccessToken struct {
 // NewAccessToken returns a new instance of AccessToken with the specified
 // token, secret and additional parameters.
 func NewAccessToken(token, secret string, params map[string]string) *AccessToken {
-	return &AccessToken {
-		token  : token,
-		secret : secret,
-		params : params,
+	return &AccessToken{
+		token:  token,
+		secret: secret,
+		params: params,
 	}
 }
 
@@ -60,16 +60,21 @@ func ParseAccessTokenStr(str string) (*AccessToken, error) {
 	//loop through parts to create Token
 	for key, val := range parts {
 		switch key {
-		case "oauth_token"        : token.token = val[0]
-		case "oauth_token_secret" : token.secret = val[0]
-		default                   : token.params[key] = val[0]
+		case "oauth_token":
+			token.token = val[0]
+		case "oauth_token_secret":
+			token.secret = val[0]
+		default:
+			token.params[key] = val[0]
 		}
 	}
 
 	//some error checking ...
 	switch {
-	case len(token.token) == 0  : return nil, errors.New(str)
-	case len(token.secret) == 0 : return nil, errors.New(str)
+	case len(token.token) == 0:
+		return nil, errors.New(str)
+	case len(token.secret) == 0:
+		return nil, errors.New(str)
 	}
 
 	return &token, nil
@@ -90,7 +95,7 @@ func (a *AccessToken) Encode() string {
 }
 
 // Gets the oauth_token value
-func (a *AccessToken) Token()  string { return a.token }
+func (a *AccessToken) Token() string { return a.token }
 
 // Gets the oauth_token_secret value
 func (a *AccessToken) Secret() string { return a.secret }
@@ -98,12 +103,11 @@ func (a *AccessToken) Secret() string { return a.secret }
 // Gets any additional parameters, as defined by the Service Provider.
 func (a *AccessToken) Params() map[string]string { return a.params }
 
-
 // RequestToken represents a value used by the Consumer to obtain
 // authorization from the User, and exchanged for an Access Token.
 type RequestToken struct {
-	token  string // the oauth_token value
-	secret string // the oauth_token_secret value
+	token             string // the oauth_token value
+	secret            string // the oauth_token_secret value
 	callbackConfirmed bool
 }
 
@@ -129,14 +133,16 @@ func ParseRequestTokenStr(str string) (*RequestToken, error) {
 	}
 
 	token := RequestToken{}
-	token.token  = parts.Get("oauth_token")
+	token.token = parts.Get("oauth_token")
 	token.secret = parts.Get("oauth_token_secret")
 	token.callbackConfirmed = parts.Get("oauth_callback_confirmed") == "true"
 
 	//some error checking ...
 	switch {
-	case len(token.token) == 0  : return nil, errors.New(str)
-	case len(token.secret) == 0 : return nil, errors.New(str)
+	case len(token.token) == 0:
+		return nil, errors.New(str)
+	case len(token.secret) == 0:
+		return nil, errors.New(str)
 	}
 
 	return &token, nil
@@ -153,7 +159,7 @@ func (r *RequestToken) Encode() string {
 }
 
 // Gets the oauth_token value
-func (r *RequestToken) Token()  string { return r.token }
+func (r *RequestToken) Token() string { return r.token }
 
 // Gets the oauth_token_secret value
 func (r *RequestToken) Secret() string { return r.secret }

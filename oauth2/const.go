@@ -16,7 +16,7 @@ const (
 	GrantTypeAuthorizationCode = "authorization_code"
 
 	// grant_type for requesting access to resources owned by the
-	// registered application (client). 
+	// registered application (client).
 	GrantTypeClientCredentials = "client_credentials"
 
 	// grant_type for exchanging a username and password for
