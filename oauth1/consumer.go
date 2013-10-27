@@ -67,7 +67,7 @@ func (c *Consumer) RequestToken() (*RequestToken, error) {
 	}
 
 	// sign the request
-	err := c.SignParams(&req, nil, map[string]string{ "oauth_callback":c.CallbackURL })
+	err := c.SignParams(&req, nil, map[string]string{"oauth_callback": c.CallbackURL})
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func (c *Consumer) AuthorizeToken(t *RequestToken, verifier string) (*AccessToke
 	}
 
 	// sign the request
-	err := c.SignParams(&req, t, map[string]string{ "oauth_verifier":verifier })
+	err := c.SignParams(&req, t, map[string]string{"oauth_verifier": verifier})
 	if err != nil {
 		return nil, err
 	}
@@ -156,11 +156,11 @@ func (c *Consumer) SignParams(req *http.Request, token Token, params map[string]
 
 	// ensure default parameters are set
 	//params["oauth_token"]            = token.Token()
-	params["oauth_consumer_key"]     = c.ConsumerKey
-	params["oauth_nonce"]            = nonce()
+	params["oauth_consumer_key"] = c.ConsumerKey
+	params["oauth_nonce"] = nonce()
 	params["oauth_signature_method"] = "HMAC-SHA1"
-	params["oauth_timestamp"]        = timestamp()
-	params["oauth_version"]          = "1.0"
+	params["oauth_timestamp"] = timestamp()
+	params["oauth_version"] = "1.0"
 
 	// we'll need to sign any form values?
 	if req.Form != nil {
@@ -169,7 +169,7 @@ func (c *Consumer) SignParams(req *http.Request, token Token, params map[string]
 		}
 	}
 
-	// we'll also need to sign any URL parameter 
+	// we'll also need to sign any URL parameter
 	queryParams := req.URL.Query()
 	for k, _ := range queryParams {
 		params[k] = queryParams.Get(k)
@@ -187,7 +187,7 @@ func (c *Consumer) SignParams(req *http.Request, token Token, params map[string]
 	params["oauth_signature"] = sign(base, key)
 
 	//HACK: we were previously including params in the Authorization
-	//      header that shouldn't be. so for now, we'll filter 
+	//      header that shouldn't be. so for now, we'll filter
 	//authStringParams := map[string]string{}
 	//for k,v := range params {
 	//	if strings.HasPrefix(k, "oauth_") {
@@ -199,14 +199,14 @@ func (c *Consumer) SignParams(req *http.Request, token Token, params map[string]
 	if req.Header == nil {
 		req.Header = http.Header{}
 	}
-	
+
 	// add the authorization header string
-	req.Header.Add("Authorization", authorizationString(params))//params))
+	req.Header.Add("Authorization", authorizationString(params)) //params))
 
 	// ensure the appropriate content-type is set for POST,
 	// assuming the field is not populated
 	if (req.Method == "POST" || req.Method == "PUT") && len(req.Header.Get("Content-Type")) == 0 {
-		req.Header.Set("Content-Type","application/x-www-form-urlencoded")
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	}
 
 	return nil
@@ -244,16 +244,16 @@ func sign(message, key string) string {
 // Gets the default set of OAuth1.0a headers.
 func headers(consumerKey string) map[string]string {
 	return map[string]string{
-		"oauth_consumer_key"     : consumerKey,
-		"oauth_nonce"            : nonce(),
-		"oauth_signature_method" : "HMAC-SHA1",
-		"oauth_timestamp"        : timestamp(),
-		"oauth_version"          : "1.0",
+		"oauth_consumer_key":     consumerKey,
+		"oauth_nonce":            nonce(),
+		"oauth_signature_method": "HMAC-SHA1",
+		"oauth_timestamp":        timestamp(),
+		"oauth_version":          "1.0",
 	}
 }
 
 func requestString(method string, uri string, params map[string]string) string {
-	
+
 	// loop through params, add keys to map
 	var keys []string
 	for key, _ := range params {
@@ -281,7 +281,7 @@ func requestString(method string, uri string, params map[string]string) string {
 }
 
 func authorizationString(params map[string]string) string {
-	
+
 	// loop through params, add keys to map
 	var keys []string
 	for key, _ := range params {
@@ -315,7 +315,6 @@ func authorizationString(params map[string]string) string {
 	return fmt.Sprintf("OAuth %s", str)
 }
 
-
 func escape(s string) string {
 	t := make([]byte, 0, 3*len(s))
 	for i := 0; i < len(s); i++ {
@@ -335,4 +334,3 @@ func isEscapable(b byte) bool {
 	return !('A' <= b && b <= 'Z' || 'a' <= b && b <= 'z' || '0' <= b && b <= '9' || b == '-' || b == '.' || b == '_' || b == '~')
 
 }
-

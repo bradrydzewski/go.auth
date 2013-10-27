@@ -21,7 +21,7 @@ func (u *GoogleUser) Picture() string  { return u.UserPicture }
 func (u *GoogleUser) Link() string     { return u.UserLink }
 func (u *GoogleUser) Org() string      { return "" }
 
-// GoogleProvider is an implementation of Google's Oauth2 
+// GoogleProvider is an implementation of Google's Oauth2
 // for web application flow.
 // See https://developers.google.com/accounts/docs/OAuth2WebServer
 type GoogleProvider struct {
@@ -32,10 +32,10 @@ type GoogleProvider struct {
 func NewGoogleProvider(client, secret, redirect string) *GoogleProvider {
 	goog := GoogleProvider{}
 	goog.AuthorizationURL = "https://accounts.google.com/o/oauth2/auth"
-	goog.AccessTokenURL   = "https://accounts.google.com/o/oauth2/token"
-	goog.RedirectURL      = redirect
-	goog.ClientId         = client
-	goog.ClientSecret     = secret
+	goog.AccessTokenURL = "https://accounts.google.com/o/oauth2/token"
+	goog.RedirectURL = redirect
+	goog.ClientId = client
+	goog.ClientSecret = secret
 	return &goog
 }
 

@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"flag"
-    "net/http"
+	"fmt"
 	"github.com/bradrydzewski/go.auth"
+	"net/http"
 )
 
 var homepage = `
@@ -93,7 +93,7 @@ func main() {
 	http.HandleFunc("/private", auth.SecureFunc(Private))
 
 	// logout handler
-    http.HandleFunc("/auth/logout", func (w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/auth/logout", func(w http.ResponseWriter, r *http.Request) {
 		auth.DeleteUserCookie(w, r)
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	})

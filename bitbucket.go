@@ -11,14 +11,13 @@ type BitbucketUser struct {
 	UserFirstName string `json:"first_name"`
 }
 
-func (u *BitbucketUser) Id()       string { return u.UserId }
+func (u *BitbucketUser) Id() string       { return u.UserId }
 func (u *BitbucketUser) Provider() string { return "bitbucket.org" }
-func (u *BitbucketUser) Name()     string { return u.UserId }
-func (u *BitbucketUser) Email()    string { return "" }
-func (u *BitbucketUser) Link()     string { return "https://bitbucket.org/"+u.UserId }
-func (u *BitbucketUser) Picture()  string { return u.UserPicture }
-func (u *BitbucketUser) Org()      string { return "" }
-
+func (u *BitbucketUser) Name() string     { return u.UserId }
+func (u *BitbucketUser) Email() string    { return "" }
+func (u *BitbucketUser) Link() string     { return "https://bitbucket.org/" + u.UserId }
+func (u *BitbucketUser) Picture() string  { return u.UserPicture }
+func (u *BitbucketUser) Org() string      { return "" }
 
 // BitbucketProvider is an implementation of Bitbucket's Oauth1.0a protocol.
 // See https://confluence.atlassian.com/display/BITBUCKET/OAuth+on+Bitbucket
@@ -67,5 +66,5 @@ func (self *BitbucketProvider) GetAuthenticatedUser(w http.ResponseWriter, r *ht
 	}
 
 	return wrapper.User, token, nil
-	
+
 }

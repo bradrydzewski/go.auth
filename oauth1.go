@@ -82,7 +82,7 @@ func (self *OAuth1Mixin) AuthorizeToken(w http.ResponseWriter, r *http.Request) 
 	}
 
 	//Delete the request Token ...don't need it anymore
-	DeleteUserCookieName(w,r,"_token")
+	DeleteUserCookieName(w, r, "_token")
 
 	//Parse the verification code from the Redirect URL
 	verifier := r.URL.Query().Get("oauth_verifier")
@@ -129,4 +129,3 @@ func (self *OAuth1Mixin) GetAuthenticatedUser(endpoint string, token *oauth1.Acc
 	//unmarshal user json
 	return json.Unmarshal(userData, &resp)
 }
-

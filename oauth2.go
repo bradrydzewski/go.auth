@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
-	"math/rand"
-	"time"
 	"strconv"
+	"time"
 
 	"github.com/bradrydzewski/go.auth/oauth2"
 )
@@ -56,7 +56,7 @@ func (self *OAuth2Mixin) GetAuthenticatedUser(endpoint string, accessToken strin
 
 	//create the user url
 	endpointUrl, _ := url.Parse(endpoint)
-	endpointUrl.RawQuery = "access_token="+accessToken
+	endpointUrl.RawQuery = "access_token=" + accessToken
 
 	//create the http request for the user Url
 	req := http.Request{
