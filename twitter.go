@@ -23,7 +23,7 @@ type TwitterProvider struct {
 	OAuth1Mixin
 }
 
-// NewTwitterProvider allocates and returns a new BitbucketProvider.
+// NewTwitterProvider allocates and returns a new TwitterProvider.
 func NewTwitterProvider(key, secret, callback string) *TwitterProvider {
 	twitter := TwitterProvider{}
 	twitter.AuthorizationURL = "https://api.twitter.com/oauth/authorize"
