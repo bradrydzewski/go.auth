@@ -59,8 +59,13 @@ func (self *OpenIdProvider) Redirect(w http.ResponseWriter, r *http.Request) {
 	// append the real and return_to parameters
 	// they will be defaulted to the current Host / Path
 	// TODO use url.New().String() instead string joins below
-	params.Add("openid.realm", "http://"+r.Host)
-	params.Add("openid.return_to", "http://"+r.Host+r.URL.Path)
+	proto := "http"
+	if r.TLS != nil {
+		proto = proto + "s"
+	}
+
+	params.Add("openid.realm", proto+"://"+r.Host)
+	params.Add("openid.return_to", proto+"://"+r.Host+r.URL.Path)
 
 	// create the redirect url
 	redirectTo, _ := url.Parse(self.endpoint)
