@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"flag"
-    "net/http"
+	"fmt"
 	"github.com/bradrydzewski/go.auth"
+	"net/http"
 )
 
 var homepage = `
@@ -26,6 +26,21 @@ var privatepage = `
 	</head>
 	<body>
 		<div>oauth url: <a href="%s" target="_blank">%s</a></div>
+		<div><a href="/private/user">more details</a></div>
+		<div><a href="/auth/logout">Logout</a><div>
+	</body>
+</html>
+`
+
+var privateuser = `
+<html>
+	<head>
+		<title>Login</title>
+	</head>
+	<body>
+		<div>oauth url: <a href="%s" target="_blank">%s</a></div>
+		<div>name: %s</div>
+		<div>email: %s</div>
 		<div><a href="/auth/logout">Logout</a><div>
 	</body>
 </html>
@@ -35,6 +50,15 @@ var privatepage = `
 func Private(w http.ResponseWriter, r *http.Request) {
 	user := r.URL.User.Username()
 	fmt.Fprintf(w, fmt.Sprintf(privatepage, user, user))
+}
+
+// private webpage with additional user data
+func PrivateUser(w http.ResponseWriter, r *http.Request, u auth.User) {
+	user := u.Id()
+	name := u.Name()
+	email := u.Email()
+
+	fmt.Fprintf(w, fmt.Sprintf(privateuser, user, user, name, email))
 }
 
 // public webpage, no authentication required
@@ -69,7 +93,7 @@ func main() {
 	http.Handle("/auth/login", googHandler)
 
 	// logout handler
-    http.HandleFunc("/auth/logout", Logout)
+	http.HandleFunc("/auth/logout", Logout)
 
 	// public urls
 	http.HandleFunc("/", Public)
@@ -77,6 +101,8 @@ func main() {
 	// private, secured urls
 	http.HandleFunc("/private", auth.SecureFunc(Private))
 
+	// private url with additional user data
+	http.HandleFunc("/private/user", auth.SecureUser(PrivateUser))
 
 	println("google demo starting on port 8080")
 	err := http.ListenAndServe(":8080", nil)
@@ -84,18 +110,3 @@ func main() {
 		fmt.Println(err)
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
