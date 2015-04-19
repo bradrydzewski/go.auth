@@ -34,6 +34,11 @@ type Client struct {
 	// Used by the client to obtain authorization from the resource
 	// owner via user-agent redirection.
 	AuthorizationURL string
+
+	// Whether HTTP GET requests with parameters as querystring or
+	// HTTP POST requests with form-urlenconded parameters in the request body
+	// defaults to false
+	UseGetForTokenRequests bool
 }
 
 // AuthorizeRedirect constructs the Authorization Endpoint, where the user
@@ -190,6 +195,7 @@ func (c *Client) grantToken(params url.Values) (*Token, error) {
 	params.Set("client_id", c.ClientId)
 	params.Set("client_secret", c.ClientSecret)
 	params.Set("redirect_uri", c.RedirectURL)
+	encParams := params.Encode()
 
 	// Create the access token request url
 	endpoint, _ := url.Parse(c.AccessTokenURL)
@@ -197,23 +203,24 @@ func (c *Client) grantToken(params url.Values) (*Token, error) {
 	// Create the http request
 	req := http.Request{
 		URL:        endpoint,
-		Method:     "POST",
 		ProtoMajor: 1,
 		ProtoMinor: 1,
 		Close:      true,
 	}
 
-	// Encode the URL paraemeters in the Body of the Request
-	encParams := params.Encode()
-	reader := strings.NewReader(encParams)
-	req.Body = ioutil.NopCloser(reader)
+	req.Header = make(http.Header)
+	req.Header.Set("Accept", "application/json")
 
-	// Add the header params
-	header := make(http.Header)
-	header.Set("Accept", "application/json")
-	header.Set("Content-Type", "application/x-www-form-urlencoded")
-	header.Set("Content-length", strconv.Itoa(len(encParams)))
-	req.Header = header
+	if c.UseGetForTokenRequests {
+		req.Method = "GET"
+		req.URL.RawQuery = encParams
+	} else {
+		req.Method = "POST"
+		reader := strings.NewReader(encParams)
+		req.Body = ioutil.NopCloser(reader)
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("Content-length", strconv.Itoa(len(encParams)))
+	}
 
 	// Do the http request and get the response
 	resp, err := http.DefaultClient.Do(&req)
