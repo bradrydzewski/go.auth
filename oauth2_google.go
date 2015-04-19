@@ -2,6 +2,7 @@ package auth
 
 import (
 	"net/http"
+	"net/url"
 )
 
 // GoogleUser represents a Google user object returned by the OAuth2 service.
@@ -21,7 +22,7 @@ func (u *GoogleUser) Picture() string  { return u.UserPicture }
 func (u *GoogleUser) Link() string     { return u.UserLink }
 func (u *GoogleUser) Org() string      { return "" }
 
-// GoogleProvider is an implementation of Google's Oauth2 
+// GoogleProvider is an implementation of Google's Oauth2
 // for web application flow.
 // See https://developers.google.com/accounts/docs/OAuth2WebServer
 type GoogleProvider struct {
@@ -32,10 +33,10 @@ type GoogleProvider struct {
 func NewGoogleProvider(client, secret, redirect string) *GoogleProvider {
 	goog := GoogleProvider{}
 	goog.AuthorizationURL = "https://accounts.google.com/o/oauth2/auth"
-	goog.AccessTokenURL   = "https://accounts.google.com/o/oauth2/token"
-	goog.RedirectURL      = redirect
-	goog.ClientId         = client
-	goog.ClientSecret     = secret
+	goog.AccessTokenURL = "https://accounts.google.com/o/oauth2/token"
+	goog.RedirectURL = redirect
+	goog.ClientId = client
+	goog.ClientSecret = secret
 	return &goog
 }
 
@@ -56,6 +57,8 @@ func (self *GoogleProvider) GetAuthenticatedUser(w http.ResponseWriter, r *http.
 	}
 
 	user := GoogleUser{}
-	err = self.OAuth2Mixin.GetAuthenticatedUser("https://www.googleapis.com/oauth2/v2/userinfo", token.AccessToken, &user)
+	params := url.Values{}
+	params.Add("access_token", token.AccessToken)
+	err = self.OAuth2Mixin.GetAuthenticatedUser("https://www.googleapis.com/oauth2/v2/userinfo", params, &user)
 	return &user, token, err
 }

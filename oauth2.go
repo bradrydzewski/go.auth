@@ -52,11 +52,11 @@ func (self *OAuth2Mixin) GetAccessToken(r *http.Request) (*oauth2.Token, error) 
 }
 
 // Gets the Authenticated User
-func (self *OAuth2Mixin) GetAuthenticatedUser(endpoint string, accessToken string, resp interface{}) error {
+func (self *OAuth2Mixin) GetAuthenticatedUser(endpoint string, queryParams url.Values, resp interface{}) error {
 
 	//create the user url
 	endpointUrl, _ := url.Parse(endpoint)
-	endpointUrl.RawQuery = "access_token="+accessToken
+	endpointUrl.RawQuery = queryParams.Encode()
 
 	//create the http request for the user Url
 	req := http.Request{
